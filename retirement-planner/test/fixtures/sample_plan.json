@@ -148,9 +148,10 @@
    "title": "Goals and taxable investing",
    "target": 0,
    "monthly": 650,
-   "months": 0,
+   "months": 326,
    "startMonth": 118,
-   "endMonth": 118,
+   "endMonth": 444,
+   "ongoing": true,
    "why": "Anything left over can fund goals or a taxable account.",
    "steps": [
     "Open a taxable brokerage account for long-term goals."
@@ -192,7 +193,7 @@
   {
    "name": "Grad school",
    "cashNeeded": 10000,
-   "monthly": 278,
+   "monthly": 400,
    "startMonth": 12,
    "feasible": false,
    "note": "Not enough free cash alongside the house goal; consider a longer timeline."

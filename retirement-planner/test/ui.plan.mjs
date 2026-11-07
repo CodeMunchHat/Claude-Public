@@ -43,6 +43,7 @@ PlanView.render(window.__plan, window.__inputs, document.getElementById('out'));
     for (const id of ['toolbar', 'title', 'warnings', 'ninety', 'phases', 'debt', 'goals', 'accounts', 'invest', 'outlook', 'protection', 'limits']) {
       assert.equal(await page.locator(`[data-section="${id}"]`).count(), 1, 'section ' + id);
     }
+    await page.evaluate(() => document.querySelectorAll('.pv details').forEach((d) => { d.open = true; }));
     const text = await page.locator('#out').innerText();
     for (const s of [money(plan.projection.balanceAtRetirement), money(plan.projection.waitBalance), money(plan.projection.costOfWaiting),
       'Your Starter Financial Plan', 'Cheltsey and Drew', 'This week', 'Months 2 and 3', 'Debt-free', 'Feasible', 'FFIJX',
@@ -51,12 +52,24 @@ PlanView.render(window.__plan, window.__inputs, document.getElementById('out'));
     }
     assert.equal(await page.locator('.pv section[data-section="phases"] tbody tr:not(.pv-steps)').count(), 7);
     assert.equal(await page.locator('#pv-projection-details tbody tr').count(), 37);
-    assert.equal(await page.locator('svg.pv-chart title').count(), 1);
-    assert.equal(await page.locator('svg.pv-chart path').count(), 2);
+    assert.equal(await page.locator('svg.pv-chart title').count(), 3, 'gantt, debt and outlook charts');
+    assert.ok(await page.locator('#pv-outchart-t').count() === 1 && await page.locator('#pv-debtchart-t').count() === 1);
+    assert.equal(await page.locator('[data-section="toolbar"] button[aria-label][title]').count(), 4);
+    assert.ok(await page.locator('[data-section="situation"] .pv-tile').count() >= 5);
+    assert.ok(await page.locator('.pv-seg').count() >= 2, 'cash-flow and income bars');
+    assert.ok(await page.locator('[data-section="goals"] .pv-status.no').count() === 1, 'one infeasible goal');
+    // hover tooltip on the outlook chart
+    const box = await page.locator('#pv-outchart-t').evaluateHandle((t) => t.ownerSVGElement.querySelector('rect[tabindex]'));
+    await box.asElement().scrollIntoViewIfNeeded();
+    const bb = await box.asElement().boundingBox();
+    await page.mouse.move(bb.x + bb.width * 0.9, bb.y + bb.height / 2);
+    assert.ok((await page.locator('.pv-tip').innerText()).includes('Age'), 'tooltip shows on hover');
+    await page.mouse.move(0, 0);
 
     // expandable phase row
     const steps = page.locator('#pv-steps-0');
     assert.equal(await steps.isHidden(), true);
+    await page.evaluate(() => { document.getElementById('pv-phases-details').open = true; });
     await page.locator('button[aria-controls="pv-steps-0"]').click();
     assert.equal(await steps.isVisible(), true);
 
@@ -67,6 +80,7 @@ PlanView.render(window.__plan, window.__inputs, document.getElementById('out'));
     const overflow2 = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     assert.ok(overflow2 <= 0, 'page overflows with projection open by ' + overflow2);
 
+    await page.evaluate(() => document.querySelectorAll('.pv details').forEach((d) => { d.open = false; }));
     const shots = process.env.SHOT_DIR || tmp;
     await page.screenshot({ path: path.join(shots, 'plan-375.png'), fullPage: true });
     await page.setViewportSize({ width: 1024, height: 800 });
@@ -77,6 +91,7 @@ PlanView.render(window.__plan, window.__inputs, document.getElementById('out'));
     assert.equal(dl.suggestedFilename(), 'cheltsey-drew-financial-plan.pdf');
     const pdf = path.join(tmp, dl.suggestedFilename());
     await dl.saveAs(pdf);
+    if (process.env.SHOT_DIR) fs.copyFileSync(pdf, path.join(process.env.SHOT_DIR, 'plan.pdf'));
     const info = execFileSync('pdfinfo', [pdf], { encoding: 'utf8' });
     const pages = Number(/Pages:\s+(\d+)/.exec(info)[1]);
     assert.ok(pages >= 3, 'pdf pages ' + pages);

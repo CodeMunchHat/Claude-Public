@@ -1,1 +1,9 @@
-{"version":1,"household":{"earners":2,"married":true,"state":"TN","people":[{"name":"Cheltsey","age":28,"retireAge":65,"salary":42500},{"name":"Drew","age":28,"retireAge":65,"salary":42500}]},"assumptions":{"waitYearsComparison":10}}
+{"version":1,"household":{"earners":2,"married":true,"state":"TN","people":[
+ {"name":"Cheltsey","age":28,"retireAge":65,"salary":42500,"publicService":true},
+ {"name":"Drew","age":28,"retireAge":65,"salary":42500}]},
+ "cash":{"checking":1500,"savings":500,"monthlyExpenses":4500,"emergencyFund":0},
+ "debts":[{"name":"Visa","type":"credit_card","balance":5000,"apr":0.22,"minPayment":150},
+          {"name":"Car","type":"auto","balance":12000,"apr":0.065,"minPayment":300}],
+ "goals":[{"type":"house","name":"First home","targetPrice":300000,"downPct":0.05,"closingPct":0.03,"years":5,"saved":0},
+          {"type":"other","name":"Grad school","amount":10000,"years":3,"saved":0}],
+ "assumptions":{"realReturn":0.05,"withdrawalRate":0.04,"waitYearsComparison":10}}

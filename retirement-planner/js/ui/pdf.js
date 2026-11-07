@@ -92,6 +92,38 @@
       y = doc.lastAutoTable.finalY + 10;
     }
     var R = { halign: 'right' };
+    var COLORS = [[42, 120, 214], [235, 104, 52], [27, 175, 122]];
+    function stackBar(parts, scaleMax, marker) {
+      need(64);
+      var bh = 22, top = y + (marker ? 16 : 0), x = M, total = parts.reduce(function (t, p) { return t + p.value; }, 0);
+      var width = CW * (scaleMax ? total / scaleMax : 1);
+      parts.forEach(function (p, i) {
+        if (p.value <= 0) return;
+        var w = Math.max(0, width * p.value / total - 2);
+        var c = COLORS[i % 3];
+        doc.setFillColor(c[0], c[1], c[2]); doc.rect(x, top, w, bh, 'F');
+        if (w > 70) { doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255); doc.text(clean(p.label), x + 6, top + 14); }
+        x += w + 2;
+      });
+      if (marker) {
+        var mx = M + CW * marker.value / scaleMax;
+        doc.setDrawColor(11, 11, 11); doc.setLineWidth(1.5); doc.line(mx, top - 4, mx, top + bh + 4);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(11, 11, 11);
+        doc.text(clean(marker.label), Math.min(mx, PW - M - 60), top - 8, { align: mx > PW - M - 60 ? 'center' : 'center' });
+      }
+      y = top + bh + 8;
+      parts.forEach(function (p, i) {
+        var c = COLORS[i % 3];
+      });
+      // legend
+      var lx = M; doc.setFontSize(8.5);
+      parts.forEach(function (p, i) {
+        var c = COLORS[i % 3]; doc.setFillColor(c[0], c[1], c[2]); doc.rect(lx, y - 7, 8, 8, 'F');
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(82, 81, 78);
+        var t = clean(p.name); doc.text(t, lx + 12, y); lx += 12 + doc.getTextWidth(t) + 16;
+      });
+      y += 16; setBody();
+    }
 
     // Title block
     doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
@@ -106,6 +138,17 @@
     // Situation
     heading('Your situation');
     var st = hh.state || sum.state;
+    var cashIn = inputs.cash || {}, debtTot = (inputs.debts || []).reduce(function (t, d) { return t + (d.balance || 0); }, 0);
+    var tileDefs = [['Combined income', money(sum.combinedIncome)], ['Take-home per month', money(sum.takeHomeMonthly)], ['Free cash per month', money(sum.freeCashMonthly)],
+      ['Federal tax bracket', pct(sum.marginalFederal, 0)], ['Total debt', inputs.debts ? money(debtTot) : '-'], ['Retirement balance', money(proj.balanceAtRetirement)]];
+    var tileBody = [];
+    for (var ti = 0; ti < 6; ti += 3) {
+      tileBody.push(tileDefs.slice(ti, ti + 3).map(function (t) { return { content: clean(t[1]), styles: { fontSize: 18, fontStyle: 'bold', textColor: NAVY, halign: 'center', cellPadding: { top: 8, bottom: 1, left: 4, right: 4 } } }; }));
+      tileBody.push(tileDefs.slice(ti, ti + 3).map(function (t) { return { content: clean(t[0]), styles: { fontSize: 8.5, textColor: [82, 81, 78], halign: 'center', cellPadding: { top: 1, bottom: 8, left: 4, right: 4 } } }; }));
+    }
+    doc.autoTable({ startY: y, body: tileBody, margin: { left: M, right: M, bottom: 56 }, theme: 'plain', styles: { font: 'helvetica', lineWidth: 0 },
+      didParseCell: function (d) { d.cell.styles.fillColor = ZEBRA; } });
+    y = doc.lastAutoTable.finalY + 12;
     tbl(['Item', 'Value'], [
       ['Combined income', money(sum.combinedIncome)],
       ['Filing status', { mfj: 'Married filing jointly', single: 'Single' }[sum.filingStatus] || String(sum.filingStatus || '')],
@@ -132,8 +175,8 @@
     // Phases
     heading('Your plan in order');
     tbl(['#', 'Phase', 'When', 'Target', 'Monthly', 'Why'], (plan.phases || []).map(function (p, i) {
-      var when = p.endMonth > p.startMonth
-        ? 'Months ' + p.startMonth + ' to ' + p.endMonth + ' (about ' + plural(p.endMonth - p.startMonth, 'month') + ')\n' + monthYear(p.startMonth, now) + ' to ' + monthYear(p.endMonth, now)
+      var when = p.ongoing ? 'From ' + monthYear(p.startMonth, now) + ', ongoing to retirement'
+        : p.endMonth > p.startMonth ? monthYear(p.startMonth, now) + ' to ' + monthYear(p.endMonth, now) + ' (~' + (p.endMonth - p.startMonth) + ' mo)'
         : 'From ' + monthYear(p.startMonth, now);
       return [String(i + 1), p.title, when, p.target ? money(p.target) : '-', money(p.monthly), p.why];
     }), { columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 90, fontStyle: 'bold' }, 2: { cellWidth: 110 }, 3: { cellWidth: 50, halign: 'right' }, 4: { cellWidth: 50, halign: 'right' } } });
@@ -148,7 +191,7 @@
     heading('Debt payoff');
     if ((debt.order || []).length) {
       para('Method: ' + debt.method + '. Total interest ' + money(debt.totalInterest) + '. Debt-free in ' + plural(debt.debtFreeMonth, 'month') + ' (' + monthYear(debt.debtFreeMonth, now) + ').');
-      tbl(['Debt', 'Payment / month', 'Months', 'Interest'], debt.order.map(function (d) { return [d.name, money(d.payment), String(d.months), money(d.interest)]; }),
+      tbl(['Debt', 'Payment / month (while focused)', 'Months', 'Interest'], debt.order.map(function (d) { return [d.name, money(d.payment), String(d.months), money(d.interest)]; }),
         { columnStyles: { 1: R, 2: R, 3: R } });
       if (debt.snowballAlt) {
         var alt = debt.method === 'snowball' ? 'avalanche' : 'snowball';
@@ -175,6 +218,8 @@
     heading('What to invest in');
     para('Suggested mix: ' + pct(al.stockPct, 0) + ' stocks and ' + pct(al.bondPct, 0) + ' bonds. ' +
       (al.option === 'target_date' ? 'Simplest option: one target-date fund for ' + al.targetYear + '.' : 'Simplest option: a three-fund mix.'));
+    stackBar([{ name: 'Stocks ' + pct(al.stockPct, 0), label: 'Stocks ' + pct(al.stockPct, 0), value: al.stockPct || 0 },
+      { name: 'Bonds ' + pct(al.bondPct, 0), label: 'Bonds ' + pct(al.bondPct, 0), value: al.bondPct || 0 }], 1);
     if ((al.examples || []).length) tbl(['Provider', 'Example fund'], al.examples.map(function (e) { return [e.provider, e.fund]; }));
     if (al.note) para(al.note);
 
@@ -191,6 +236,12 @@
       ['Balance if you wait to start', money(proj.waitBalance)],
       ['Cost of waiting', money(proj.costOfWaiting)]
     ], { columnStyles: { 0: { cellWidth: 240, fontStyle: 'bold' }, 1: R } });
+    sub('Yearly income at retirement');
+    var todayInc = sum.combinedIncome || 0, scaleMax = Math.max(proj.totalIncome || 0, todayInc) * 1.05 || 1;
+    stackBar([{ name: 'Investments', label: 'Investments ' + money(proj.incomeFromInvestments), value: proj.incomeFromInvestments || 0 },
+      { name: 'Pension', label: 'Pension ' + money(proj.pension), value: proj.pension || 0 },
+      { name: 'Social Security', label: 'Social Security ' + money(proj.socialSecurity), value: proj.socialSecurity || 0 }],
+      scaleMax, { value: todayInc, label: 'Today ' + money(todayInc) + ' | replaces ' + pct(proj.replacementPct, 0) });
     var sc = proj.scenarios || {};
     tbl(['Scenario', 'Real return', 'Balance at retirement'], [['worst', 'Worse'], ['base', 'Expected'], ['best', 'Better']]
       .filter(function (k) { return sc[k[0]]; }).map(function (k) { return [k[1], pct(sc[k[0]].realReturn, 1), money(sc[k[0]].balance)]; }),
