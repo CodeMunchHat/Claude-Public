@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Retirement Planner</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/print.css" media="print">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <h1>Retirement Planner</h1>
+    <p class="subtitle">Answer a few questions and get a step-by-step savings plan. No account, no email.</p>
+  </div>
+</header>
+<main class="wrap">
+  <section id="questionnaire" aria-label="Questionnaire"></section>
+  <section id="plan-view" hidden></section>
+</main>
+<footer class="site-footer">
+  <div class="wrap"><p>Educational tool, not licensed financial advice. All data stays in your browser.</p></div>
+</footer>
+<script src="js/vendor/jspdf.umd.min.js"></script>
+<script src="js/vendor/jspdf.plugin.autotable.min.js"></script>
+<script src="js/engine/tables.js"></script>
+<script src="js/engine/waterfall.js"></script>
+<script src="js/engine/debt.js"></script>
+<script src="js/engine/goals.js"></script>
+<script src="js/engine/projection.js"></script>
+<script src="js/engine/allocation.js"></script>
+<script src="js/engine/index.js"></script>
+<script src="js/ui/storage.js"></script>
+<script src="js/ui/questionnaire.js"></script>
+<script src="js/ui/plan.js"></script>
+<script src="js/ui/pdf.js"></script>
+<script src="js/ui/app.js"></script>
+</body>
+</html>

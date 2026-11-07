@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "household": {
+    "earners": 2,
+    "married": true,
+    "state": "TN",
+    "people": [
+      { "name": "Cheltsey", "age": 28, "retireAge": 65, "salary": 42500, "raisePct": 0.0, "publicService": true },
+      { "name": "Drew", "age": 28, "retireAge": 65, "salary": 42500, "raisePct": 0.0, "publicService": false }
+    ]
+  },
+  "accounts": [
+    { "owner": 0, "type": "pension", "balance": 0, "contribPct": 0.06, "vestYears": 5, "yearsWorked": 1.5, "estIncomeAtRetirement": 20000 },
+    { "owner": 1, "type": "401k", "balance": 0, "contribPct": 0.0, "matchPct": 1.0, "matchUpToPct": 0.03, "rothOption": true }
+  ],
+  "cash": { "checking": 1500, "savings": 500, "monthlyExpenses": 4500, "emergencyFund": 0 },
+  "debts": [
+    { "name": "Visa", "type": "credit_card", "balance": 5000, "apr": 0.22, "minPayment": 150 },
+    { "name": "Car", "type": "auto", "balance": 12000, "apr": 0.065, "minPayment": 300 }
+  ],
+  "goals": [
+    { "type": "house", "name": "First home", "targetPrice": 300000, "downPct": 0.05, "closingPct": 0.03, "years": 5, "saved": 0 },
+    { "type": "other", "name": "Grad school", "amount": 10000, "years": 3, "saved": 0 }
+  ],
+  "risk": { "dropReaction": "hold_or_buy", "horizonComfort": "long", "experience": "none" },
+  "assumptions": {
+    "realReturn": 0.05, "safeYield": 0.0357, "withdrawalRate": 0.04,
+    "socialSecurityAtRetirement": 35000, "waitYearsComparison": 10, "payoffMethod": "avalanche",
+    "extraMonthlyCash": null
+  }
+}
