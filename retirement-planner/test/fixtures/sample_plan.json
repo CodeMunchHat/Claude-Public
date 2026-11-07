@@ -1,0 +1,755 @@
+{
+ "summary": {
+  "combinedIncome": 85000,
+  "filingStatus": "mfj",
+  "marginalFederal": 0.12,
+  "stateRate": 0,
+  "state": "TN",
+  "takeHomeMonthly": 5600,
+  "freeCashMonthly": 650,
+  "rothRecommended": true,
+  "warnings": [
+   "Your free cash (about $650/mo) does not cover every goal at once; goals are scheduled after the credit card is paid off.",
+   "Cheltsey's pension is not vested until 5 years of service (1.5 years worked)."
+  ],
+  "verify": [
+   "Confirm Drew's employer match formula (100% up to 3%) with HR.",
+   "Check whether Cheltsey's employer qualifies for Public Service Loan Forgiveness.",
+   "Get your Social Security estimate at ssa.gov and update the plan.",
+   "Confirm the Visa APR and balance on your latest statement."
+  ]
+ },
+ "ninetyDays": [
+  {
+   "who": "Drew",
+   "text": "Set 401(k) contribution to 3% to capture the full match.",
+   "when": "this_week"
+  },
+  {
+   "who": "Both",
+   "text": "Open a high-yield savings account for the starter emergency fund.",
+   "when": "this_week"
+  },
+  {
+   "who": "Cheltsey",
+   "text": "Ask HR for the pension vesting schedule in writing.",
+   "when": "this_week"
+  },
+  {
+   "who": "Both",
+   "text": "Set up automatic transfer of $300/month to the starter emergency fund.",
+   "when": "this_month"
+  },
+  {
+   "who": "Both",
+   "text": "Pay $300/month toward the Visa card (highest APR first).",
+   "when": "this_month"
+  },
+  {
+   "who": "Drew",
+   "text": "Open a Roth IRA at a low-cost broker.",
+   "when": "months_2_3"
+  },
+  {
+   "who": "Both",
+   "text": "Name beneficiaries on every account.",
+   "when": "months_2_3"
+  }
+ ],
+ "phases": [
+  {
+   "id": "starter_ef",
+   "title": "Starter emergency fund",
+   "target": 2000,
+   "monthly": 300,
+   "months": 7,
+   "startMonth": 0,
+   "endMonth": 7,
+   "why": "A small cushion keeps a surprise bill off your credit card.",
+   "steps": [
+    "Open a high-yield savings account.",
+    "Automate $300/month.",
+    "Do not invest this money."
+   ]
+  },
+  {
+   "id": "match",
+   "title": "Capture employer match",
+   "target": 0,
+   "monthly": 128,
+   "months": 1,
+   "startMonth": 0,
+   "endMonth": 1,
+   "why": "A match is an instant 100% return on the first 3% of pay.",
+   "steps": [
+    "Set Drew's 401(k) to 3%.",
+    "Choose the Roth option if offered."
+   ]
+  },
+  {
+   "id": "high_debt",
+   "title": "Pay off high-interest debt",
+   "target": 5000,
+   "monthly": 300,
+   "months": 21,
+   "startMonth": 7,
+   "endMonth": 28,
+   "why": "The Visa costs 22% a year, more than investing is likely to earn.",
+   "steps": [
+    "Pay minimum on the car loan.",
+    "Put every extra dollar on the Visa.",
+    "Close nothing; just stop using it."
+   ]
+  },
+  {
+   "id": "full_ef",
+   "title": "Full emergency fund (3 months)",
+   "target": 13500,
+   "monthly": 450,
+   "months": 30,
+   "startMonth": 28,
+   "endMonth": 58,
+   "why": "Three months of expenses covers a job gap with two incomes.",
+   "steps": [
+    "Grow the savings account to $13,500.",
+    "Keep it in a savings account, not stocks."
+   ]
+  },
+  {
+   "id": "roth_hsa",
+   "title": "Roth IRA and HSA",
+   "target": 15000,
+   "monthly": 625,
+   "months": 24,
+   "startMonth": 58,
+   "endMonth": 82,
+   "why": "Tax-free growth, available to both of you.",
+   "steps": [
+    "Fund Roth IRAs up to the yearly limit.",
+    "Use an HSA if you have a high-deductible plan."
+   ]
+  },
+  {
+   "id": "retire_15",
+   "title": "Raise retirement saving to 15%",
+   "target": 0,
+   "monthly": 850,
+   "months": 36,
+   "startMonth": 82,
+   "endMonth": 118,
+   "why": "15% of pay is a common target for a comfortable retirement.",
+   "steps": [
+    "Raise 401(k) 1% each raise.",
+    "Reach 12% in the 401(k)."
+   ]
+  },
+  {
+   "id": "goals_taxable",
+   "title": "Goals and taxable investing",
+   "target": 0,
+   "monthly": 650,
+   "months": 0,
+   "startMonth": 118,
+   "endMonth": 118,
+   "why": "Anything left over can fund goals or a taxable account.",
+   "steps": [
+    "Open a taxable brokerage account for long-term goals."
+   ]
+  }
+ ],
+ "debt": {
+  "method": "avalanche",
+  "order": [
+   {
+    "name": "Visa",
+    "months": 21,
+    "interest": 1300,
+    "payment": 300
+   },
+   {
+    "name": "Car",
+    "months": 34,
+    "interest": 1650,
+    "payment": 300
+   }
+  ],
+  "totalInterest": 2950,
+  "debtFreeMonth": 34,
+  "snowballAlt": {
+   "totalInterest": 3010,
+   "debtFreeMonth": 34
+  }
+ },
+ "goals": [
+  {
+   "name": "First home",
+   "cashNeeded": 24000,
+   "monthly": 366,
+   "startMonth": 12,
+   "feasible": true,
+   "note": "5% down plus 3% closing on a $300,000 home in 5 years."
+  },
+  {
+   "name": "Grad school",
+   "cashNeeded": 10000,
+   "monthly": 278,
+   "startMonth": 12,
+   "feasible": false,
+   "note": "Not enough free cash alongside the house goal; consider a longer timeline."
+  }
+ ],
+ "accounts": [
+  {
+   "priority": 1,
+   "owner": "Drew",
+   "account": "401(k) (Roth option)",
+   "action": "Contribute 3% now; raise to 12% after house",
+   "limit2026": 24500
+  },
+  {
+   "priority": 2,
+   "owner": "Both",
+   "account": "High-yield savings",
+   "action": "Open for emergency fund",
+   "limit2026": null
+  },
+  {
+   "priority": 3,
+   "owner": "Cheltsey",
+   "account": "Roth IRA",
+   "action": "Open after the Visa is paid off",
+   "limit2026": 7500
+  },
+  {
+   "priority": 4,
+   "owner": "Drew",
+   "account": "Roth IRA",
+   "action": "Open after the Visa is paid off",
+   "limit2026": 7500
+  }
+ ],
+ "allocation": {
+  "stockPct": 0.9,
+  "bondPct": 0.1,
+  "option": "target_date",
+  "targetYear": 2065,
+  "examples": [
+   {
+    "provider": "Fidelity",
+    "fund": "FFIJX"
+   },
+   {
+    "provider": "Vanguard",
+    "fund": "VTTSX"
+   },
+   {
+    "provider": "Schwab",
+    "fund": "SWYNX"
+   }
+  ],
+  "note": "A target-date fund holds stocks and bonds and shifts safer over time. Pick one fund and leave it."
+ },
+ "projection": {
+  "years": [
+   {
+    "year": 1,
+    "age": 28,
+    "phase": "before_house",
+    "pay": 85000,
+    "contrib": 5525,
+    "match": 0,
+    "start": 0,
+    "growth": 0,
+    "end": 5525,
+    "waitEnd": 0
+   },
+   {
+    "year": 2,
+    "age": 29,
+    "phase": "before_house",
+    "pay": 85000,
+    "contrib": 5525,
+    "match": 0,
+    "start": 5525,
+    "growth": 276,
+    "end": 11326,
+    "waitEnd": 0
+   },
+   {
+    "year": 3,
+    "age": 30,
+    "phase": "before_house",
+    "pay": 85000,
+    "contrib": 5525,
+    "match": 0,
+    "start": 11326,
+    "growth": 566,
+    "end": 17417,
+    "waitEnd": 0
+   },
+   {
+    "year": 4,
+    "age": 31,
+    "phase": "before_house",
+    "pay": 85000,
+    "contrib": 5525,
+    "match": 0,
+    "start": 17417,
+    "growth": 871,
+    "end": 23813,
+    "waitEnd": 0
+   },
+   {
+    "year": 5,
+    "age": 32,
+    "phase": "before_house",
+    "pay": 85000,
+    "contrib": 5525,
+    "match": 0,
+    "start": 23813,
+    "growth": 1191,
+    "end": 30529,
+    "waitEnd": 0
+   },
+   {
+    "year": 6,
+    "age": 33,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 30529,
+    "growth": 1526,
+    "end": 42255,
+    "waitEnd": 0
+   },
+   {
+    "year": 7,
+    "age": 34,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 42255,
+    "growth": 2113,
+    "end": 54568,
+    "waitEnd": 0
+   },
+   {
+    "year": 8,
+    "age": 35,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 54568,
+    "growth": 2728,
+    "end": 67496,
+    "waitEnd": 0
+   },
+   {
+    "year": 9,
+    "age": 36,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 67496,
+    "growth": 3375,
+    "end": 81071,
+    "waitEnd": 0
+   },
+   {
+    "year": 10,
+    "age": 37,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 81071,
+    "growth": 4054,
+    "end": 95325,
+    "waitEnd": 0
+   },
+   {
+    "year": 11,
+    "age": 38,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 95325,
+    "growth": 4766,
+    "end": 110291,
+    "waitEnd": 10200
+   },
+   {
+    "year": 12,
+    "age": 39,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 110291,
+    "growth": 5515,
+    "end": 126006,
+    "waitEnd": 20910
+   },
+   {
+    "year": 13,
+    "age": 40,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 126006,
+    "growth": 6300,
+    "end": 142506,
+    "waitEnd": 32156
+   },
+   {
+    "year": 14,
+    "age": 41,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 142506,
+    "growth": 7125,
+    "end": 159831,
+    "waitEnd": 43963
+   },
+   {
+    "year": 15,
+    "age": 42,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 159831,
+    "growth": 7992,
+    "end": 178023,
+    "waitEnd": 56361
+   },
+   {
+    "year": 16,
+    "age": 43,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 178023,
+    "growth": 8901,
+    "end": 197124,
+    "waitEnd": 69380
+   },
+   {
+    "year": 17,
+    "age": 44,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 197124,
+    "growth": 9856,
+    "end": 217180,
+    "waitEnd": 83048
+   },
+   {
+    "year": 18,
+    "age": 45,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 217180,
+    "growth": 10859,
+    "end": 238239,
+    "waitEnd": 97401
+   },
+   {
+    "year": 19,
+    "age": 46,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 238239,
+    "growth": 11912,
+    "end": 260351,
+    "waitEnd": 112471
+   },
+   {
+    "year": 20,
+    "age": 47,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 260351,
+    "growth": 13018,
+    "end": 283569,
+    "waitEnd": 128295
+   },
+   {
+    "year": 21,
+    "age": 48,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 283569,
+    "growth": 14178,
+    "end": 307947,
+    "waitEnd": 144909
+   },
+   {
+    "year": 22,
+    "age": 49,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 307947,
+    "growth": 15397,
+    "end": 333544,
+    "waitEnd": 162355
+   },
+   {
+    "year": 23,
+    "age": 50,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 333544,
+    "growth": 16677,
+    "end": 360421,
+    "waitEnd": 180672
+   },
+   {
+    "year": 24,
+    "age": 51,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 360421,
+    "growth": 18021,
+    "end": 388642,
+    "waitEnd": 199906
+   },
+   {
+    "year": 25,
+    "age": 52,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 388642,
+    "growth": 19432,
+    "end": 418274,
+    "waitEnd": 220101
+   },
+   {
+    "year": 26,
+    "age": 53,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 418274,
+    "growth": 20914,
+    "end": 449388,
+    "waitEnd": 241306
+   },
+   {
+    "year": 27,
+    "age": 54,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 449388,
+    "growth": 22469,
+    "end": 482057,
+    "waitEnd": 263572
+   },
+   {
+    "year": 28,
+    "age": 55,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 482057,
+    "growth": 24103,
+    "end": 516360,
+    "waitEnd": 286950
+   },
+   {
+    "year": 29,
+    "age": 56,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 516360,
+    "growth": 25818,
+    "end": 552378,
+    "waitEnd": 311498
+   },
+   {
+    "year": 30,
+    "age": 57,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 552378,
+    "growth": 27619,
+    "end": 590197,
+    "waitEnd": 337273
+   },
+   {
+    "year": 31,
+    "age": 58,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 590197,
+    "growth": 29510,
+    "end": 629907,
+    "waitEnd": 364336
+   },
+   {
+    "year": 32,
+    "age": 59,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 629907,
+    "growth": 31495,
+    "end": 671602,
+    "waitEnd": 392753
+   },
+   {
+    "year": 33,
+    "age": 60,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 671602,
+    "growth": 33580,
+    "end": 715382,
+    "waitEnd": 422591
+   },
+   {
+    "year": 34,
+    "age": 61,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 715382,
+    "growth": 35769,
+    "end": 761351,
+    "waitEnd": 453920
+   },
+   {
+    "year": 35,
+    "age": 62,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 761351,
+    "growth": 38068,
+    "end": 809619,
+    "waitEnd": 486816
+   },
+   {
+    "year": 36,
+    "age": 63,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 809619,
+    "growth": 40481,
+    "end": 860300,
+    "waitEnd": 521357
+   },
+   {
+    "year": 37,
+    "age": 64,
+    "phase": "after_house",
+    "pay": 85000,
+    "contrib": 10200,
+    "match": 0,
+    "start": 860300,
+    "growth": 43015,
+    "end": 913515,
+    "waitEnd": 557625
+   }
+  ],
+  "balanceAtRetirement": 913517,
+  "incomeFromInvestments": 36541,
+  "pension": 20000,
+  "socialSecurity": 35000,
+  "totalIncome": 91541,
+  "replacementPct": 1.077,
+  "withoutPension": 71541,
+  "withoutPensionPct": 0.842,
+  "waitBalance": 557625,
+  "costOfWaiting": 355892,
+  "scenarios": {
+   "worst": {
+    "realReturn": 0.03,
+    "balance": 611063
+   },
+   "base": {
+    "realReturn": 0.05,
+    "balance": 913517
+   },
+   "best": {
+    "realReturn": 0.07,
+    "balance": 1401134
+   }
+  }
+ },
+ "protection": [
+  {
+   "item": "Beneficiaries",
+   "text": "Name each other on every account."
+  },
+  {
+   "item": "Disability insurance",
+   "text": "Check employer long-term disability coverage."
+  },
+  {
+   "item": "Term life",
+   "text": "Buy term life when you buy a home or have kids."
+  },
+  {
+   "item": "Wills",
+   "text": "Make simple wills and a healthcare proxy."
+  }
+ ],
+ "limits": {
+  "updated": "2026-11-07",
+  "y2026": {
+   "k401": 24500,
+   "ira": 7500,
+   "hsaFamily": 8750,
+   "hsaSingle": 4400
+  },
+  "y2027projected": {
+   "k401": 25500,
+   "ira": 7500
+  }
+ }
+}

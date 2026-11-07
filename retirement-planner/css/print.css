@@ -1,0 +1,24 @@
+/* Print stylesheet for the plan page. Link with media="print" or rely on the @media block. */
+@media print {
+  @page { margin: 0.6in; }
+  html, body { background: #fff !important; color: #000 !important; }
+  header, nav, footer.site-footer, .no-print, .pv-toolbar, #questionnaire, .questionnaire,
+  [data-view="questionnaire"], .stepper, .wizard, .step-nav { display: none !important; }
+  .pv { max-width: none !important; padding: 0 !important; color: #000 !important; font-size: 11pt; }
+  .pv h1, .pv h2, .pv h3, .pv .pv-who, .pv summary { color: #000 !important; }
+  .pv h2 { border-bottom: 1.5pt solid #000 !important; break-after: avoid; }
+  .pv section { break-inside: auto; }
+  .pv section[data-section="ninety"], .pv section[data-section="phases"], .pv section[data-section="debt"],
+  .pv section[data-section="goals"], .pv section[data-section="accounts"], .pv section[data-section="invest"],
+  .pv section[data-section="outlook"], .pv section[data-section="protection"] { break-before: page; }
+  .pv-scroll { overflow: visible !important; border: 0 !important; }
+  .pv table { min-width: 0 !important; width: 100% !important; font-size: 9pt; }
+  .pv th { background: #fff !important; color: #000 !important; border-bottom: 1.5pt solid #000; }
+  .pv td { background: #fff !important; border-top: .5pt solid #888 !important; }
+  .pv tr { break-inside: avoid; }
+  .pv tr.pv-steps[hidden] { display: table-row !important; }
+  .pv .pv-toggle { display: none !important; }
+  .pv .pv-box, .pv .pv-warn, .pv .pv-card, .pv .pv-tile { background: #fff !important; border: .75pt solid #000 !important; }
+  .pv .pv-chart { border: 0 !important; }
+  .pv details > *:not(summary) { display: block !important; }
+}
