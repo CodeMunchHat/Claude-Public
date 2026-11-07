@@ -78,3 +78,4 @@ Estimate: engine spec + engine 1 session, UI 1-2 sessions, polish/deploy 1 sessi
 - Depth: full waterfall with debt payoff and goal funding schedules.
 - Pension: user enters estimated pension income; vesting-years warning only.
 - Process: PRD sign-off is enough; rules documented in RULES.md alongside the code.
+- Execution: all build tasks run as Sonnet subagents; the main session orchestrates, reviews, and commits.
