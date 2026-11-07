@@ -7,7 +7,7 @@ People starting their careers (like Cheltsey and Drew) have no simple, trustwort
 
 ## 2. Success criteria
 - A couple with zero financial experience can finish the questionnaire in under 10 minutes without outside help.
-- Output is a prioritized, dollar-specific action plan (not generic tips), plus a year-by-year retirement projection.
+- Output is a prioritized, dollar-specific action plan (not generic tips), plus a year-by-year retirement projection, downloadable as a PDF.
 - Every number in the plan is traceable to an input or a stated assumption, and changing an input updates the plan instantly.
 - Works on a phone. No account, no email capture, no data leaves the browser.
 - Produces the same recommendations as the Cheltsey & Drew plan when given their inputs (regression test).
@@ -40,7 +40,7 @@ Plan engine (pure functions, no backend):
 
 Output:
 - "Your plan" page: situation summary, 90-day checklist, ordered phases with dollar amounts and dates, accounts to open, what to invest in, projection chart, items to verify.
-- Print / Save as PDF via browser print styles.
+- Print to PDF: a "Download PDF" button generates a clean multi-page PDF of the plan in the browser (no server), laid out like the Cheltsey & Drew PDF: situation, 90-day checklist, phases, accounts, investments, projection table, verify list. Print styles also provided as a fallback.
 - Export/import inputs as a JSON file so they can save and return (no server). No localStorage, no share links.
 
 ### Out of scope (v1)
