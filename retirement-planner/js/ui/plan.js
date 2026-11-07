@@ -9,11 +9,11 @@
   var LIGHT = '--pv-surface:#fcfcfb;--pv-tx:#0b0b0b;--pv-tx2:#52514e;--pv-mut:#898781;--pv-grid:#e1e0d9;--pv-axis:#c3c2b7;' +
     '--pv-s1:#2a78d6;--pv-s2:#eb6834;--pv-s3:#1baf7a;--pv-s4:#eda100;--pv-good:#0ca30c;--pv-warn:#fab219;--pv-serious:#ec835a;--pv-crit:#d03b3b;' +
     '--pv-good-tx:#006300;--pv-head:#1F3A5F;--pv-tile:#f4f3ee;--pv-ring:rgba(11,11,11,.10);--pv-track:#cde2fb;--pv-btn:#1F3A5F;--pv-btn-tx:#fff;' +
-    '--pv-warnbg:#fff4d6;--pv-warnbd:#d9a400;--pv-step:#eef2f8;';
-  var DARK = '--pv-surface:#1a1a19;--pv-tx:#f0efec;--pv-tx2:#c3c2b7;--pv-mut:#898781;--pv-grid:#2c2c2a;--pv-axis:#383835;' +
+    '--pv-warnbg:#fff4d6;--pv-warnbd:#d9a400;--pv-step:#eef2f8;--pv-onfill:#fff;';
+  var DARK = '--pv-surface:#1a1a19;--pv-tx:#f0efec;--pv-tx2:#c3c2b7;--pv-mut:#898781;--pv-grid:#45453f;--pv-axis:#6b6a63;' +
     '--pv-s1:#3987e5;--pv-s2:#d95926;--pv-s3:#199e70;--pv-s4:#c98500;--pv-good:#0ca30c;--pv-warn:#fab219;--pv-serious:#ec835a;--pv-crit:#d03b3b;' +
     '--pv-good-tx:#0ca30c;--pv-head:#9ec5f4;--pv-tile:#242422;--pv-ring:rgba(255,255,255,.10);--pv-track:#104281;--pv-btn:#184f95;--pv-btn-tx:#fff;' +
-    '--pv-warnbg:#3a2f10;--pv-warnbd:#fab219;--pv-step:#22262e;';
+    '--pv-warnbg:#3a2f10;--pv-warnbd:#fab219;--pv-step:#22262e;--pv-onfill:#0b0b0b;';
 
   var CSS = [
     '.pv{color-scheme:light;' + LIGHT + 'background:var(--pv-surface);color:var(--pv-tx);max-width:980px;margin:0 auto;padding:0 16px 48px;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-wrap:anywhere}',
@@ -94,6 +94,8 @@
     '.pv .pv-acct-table{display:none}',
     '@media (min-width:700px){.pv .pv-stepper{display:none}.pv .pv-acct-table{display:block}}',
     '.pv .pv-alloc{display:flex;flex-wrap:wrap;gap:20px;align-items:center}',
+    '.pv .pv-pencap{display:flex;gap:8px;align-items:flex-start;margin:12px 0 0;color:var(--pv-tx2);font-size:.92rem}',
+    '.pv .pv-pencap .pv-ico{color:var(--pv-head);margin-top:2px}',
     '.pv .pv-income{position:relative;padding-top:34px}',
     '.pv .pv-marker{position:absolute;top:0;bottom:0;width:0;border-left:2px solid var(--pv-tx);}',
     '.pv .pv-marker span{position:absolute;top:0;left:0;transform:translateX(-50%);white-space:nowrap;font-size:.8rem;color:var(--pv-tx);background:var(--pv-surface);padding:0 4px}',
@@ -288,7 +290,7 @@
     parts.forEach(function (p) {
       if (p.value <= 0) return;
       var share = p.value / total;
-      var d = el('div', { style: 'flex:' + p.value + ' 1 0;background:' + p.color + ';color:' + (ONFILL[p.color] || '#fff') });
+      var d = el('div', { style: 'flex:' + p.value + ' 1 0;background:' + p.color + ';color:' + (ONFILL[p.color] || 'var(--pv-onfill)') });
       if (share >= 0.14) d.textContent = fmt(p.value);
       tip.attach(d, function () { return { title: p.name, rows: [{ color: p.color, name: Math.round(share * 100) + '% of total', value: fmt(p.value) }] }; });
       bar.appendChild(d);
@@ -743,27 +745,30 @@
     var bal = proj.balanceAtRetirement || 0;
     var penCap = pen > 0 ? pen / wr : 0;
     var totalCap = bal + penCap || 1;
+    var overallStock = bal * (al.stockPct || 0) / totalCap;
     var dparts = [
-      { name: 'Stocks', v: bal * (al.stockPct || 0) / totalCap, color: 'var(--pv-s1)' },
-      { name: 'Bonds', v: bal * (al.bondPct || 0) / totalCap, color: 'var(--pv-s2)' }];
-    if (penCap) dparts.push({ name: 'Pension (acts like bonds)', v: penCap / totalCap, color: 'var(--pv-s3)' });
-    var donut = sv('svg', { viewBox: '0 0 180 180', width: '180', height: '180', role: 'group', 'aria-label': 'Overall mix: ' + dparts.map(function (p) { return p.name + ' ' + Math.round(p.v * 100) + '%'; }).join(', ') });
+      { name: 'Stocks', v: al.stockPct || 0, color: 'var(--pv-s1)' },
+      { name: 'Bonds', v: al.bondPct || 0, color: 'var(--pv-s2)' }];
+    var donut = sv('svg', { class: 'pv-donut', viewBox: '0 0 180 180', width: '180', height: '180', role: 'group', 'aria-label': 'Investment mix: ' + dparts.map(function (p) { return p.name + ' ' + Math.round(p.v * 100) + '%'; }).join(', ') });
     var C = 2 * Math.PI * 64, cum = 0;
     dparts.forEach(function (p) {
       var len = Math.max(0, p.v * C - 2);
       var c = sv('circle', { cx: 90, cy: 90, r: 64, fill: 'none', 'stroke-width': '26', 'stroke-dasharray': len + ' ' + (C - len), 'stroke-dashoffset': -cum, transform: 'rotate(-90 90 90)', style: 'stroke:' + p.color });
       cum += p.v * C;
-      tip.attach(c, function () { return { title: p.name, rows: [{ color: p.color, name: 'of your overall mix', value: Math.round(p.v * 100) + '%' }] }; });
+      tip.attach(c, function () { return { title: p.name, rows: [{ color: p.color, name: 'of your investments', value: Math.round(p.v * 100) + '%' }] }; });
       donut.appendChild(c);
     });
-    var stockOverall = dparts[0].v;
-    donut.appendChild(sv('text', { x: 90, y: 92, 'text-anchor': 'middle', 'font-size': '28', 'font-weight': '700', style: 'fill:var(--pv-tx)' }, Math.round(stockOverall * 100) + '%'));
+    donut.appendChild(sv('text', { x: 90, y: 92, 'text-anchor': 'middle', 'font-size': '28', 'font-weight': '700', style: 'fill:var(--pv-tx)' }, Math.round(dparts[0].v * 100) + '%'));
     donut.appendChild(sv('text', { x: 90, y: 112, 'text-anchor': 'middle', 'font-size': '12', style: 'fill:var(--pv-tx2)' }, 'stocks'));
     var al1 = el('div', { class: 'pv-alloc' }, [donut, el('div', null, [
       legend(dparts.map(function (p) { return { name: p.name + ' ' + Math.round(p.v * 100) + '%', color: p.color }; })),
       txt('p', 'Your investments alone: ' + pct(al.stockPct, 0) + ' stocks, ' + pct(al.bondPct, 0) + ' bonds.', 'pv-sub'),
       al.note ? txt('p', al.note, 'pv-sub') : null])]);
     iv.appendChild(al1);
+    if (penCap) {
+      iv.appendChild(el('p', { class: 'pv-pencap' }, [icon('shield'),
+        txt('span', 'Pension counts like bonds: counting it, the whole picture is about ' + Math.round(overallStock * 100) + '% stocks')]));
+    }
     if ((al.examples || []).length) {
       var fd = el('details', { id: 'pv-funds-details' }, [el('summary', null, [icon('chevron-down'), txt('span', 'Example funds by provider')])]);
       fd.appendChild(table(['Provider', 'Example fund'], al.examples.map(function (e) { return el('tr', null, [td(e.provider), td(e.fund)]); })));
@@ -864,6 +869,19 @@
 
     pending.forEach(function (f) { f(); });
   }
+
+  // Open every <details> for printing, then put them back the way the reader had them.
+  var printOpened = [];
+  window.addEventListener('beforeprint', function () {
+    printOpened = [];
+    Array.prototype.forEach.call(document.querySelectorAll('.pv details'), function (d) {
+      if (!d.open) { d.open = true; printOpened.push(d); }
+    });
+  });
+  window.addEventListener('afterprint', function () {
+    printOpened.forEach(function (d) { d.open = false; });
+    printOpened = [];
+  });
 
   window.PlanView = { render: render, _fmt: { money: money, pct: pct } };
 })();

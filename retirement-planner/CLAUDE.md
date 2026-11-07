@@ -23,4 +23,4 @@ v1 complete on branch `ccr-4bb89399-hym1o2`. Questionnaire (7 steps) -> engine -
 ## Open items
 - Hosting undecided; `.github/workflows/pages.yml` deploys `retirement-planner/` to GitHub Pages from `main` once Pages is set to "GitHub Actions" in repo Settings.
 - Engine: Roth-first rule can starve a house goal on tight cash flow; review whether house priority should override.
-- Dark mode and print verification pass in progress (see last commit).
+- Light mode: white labels on colored segment bars are 2.8 to 4.4:1; set `--pv-onfill` for light to a dark ink in plan.js to fix.

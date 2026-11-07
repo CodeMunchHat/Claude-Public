@@ -1,16 +1,29 @@
 /* Print stylesheet for the plan page. Link with media="print" or rely on the @media block. */
 @media print {
   @page { margin: 0.6in; }
-  html, body { background: #fff !important; color: #000 !important; }
-  header, nav, footer.site-footer, .no-print, .pv-toolbar, #questionnaire, .questionnaire,
+  :root, html { color-scheme: light !important; --bg: #fff; --surface: #fff; --text: #000; --muted: #333; --border: #888; --soft: #fff; }
+  html, body { background: #fff !important; color: #000 !important; color-scheme: light !important; }
+  /* Plan palette: force the light values so dark-mode custom properties never reach paper. */
+  .pv {
+    color-scheme: light !important;
+    --pv-surface: #fff !important; --pv-tx: #000 !important; --pv-tx2: #222 !important; --pv-mut: #555 !important;
+    --pv-grid: #ccc !important; --pv-axis: #888 !important;
+    --pv-s1: #1f64b8 !important; --pv-s2: #c2501f !important; --pv-s3: #11805a !important; --pv-s4: #b07800 !important;
+    --pv-good: #0b7a0b !important; --pv-warn: #b07800 !important; --pv-serious: #b84a20 !important; --pv-crit: #b02a2a !important;
+    --pv-good-tx: #004d00 !important; --pv-head: #000 !important; --pv-tile: #fff !important; --pv-ring: rgba(0,0,0,.2) !important;
+    --pv-track: #ddd !important; --pv-btn: #fff !important; --pv-btn-tx: #000 !important;
+    --pv-warnbg: #fff !important; --pv-warnbd: #000 !important; --pv-step: #fff !important; --pv-onfill: #fff !important;
+    background: #fff !important;
+  }
+  body > header, body > nav, footer.site-footer, .no-print, .pv-toolbar, #questionnaire, .questionnaire,
   [data-view="questionnaire"], .stepper, .wizard, .step-nav { display: none !important; }
   .pv { max-width: none !important; padding: 0 !important; color: #000 !important; font-size: 11pt; }
   .pv h1, .pv h2, .pv h3, .pv .pv-who, .pv summary { color: #000 !important; }
   .pv h2 { border-bottom: 1.5pt solid #000 !important; break-after: avoid; }
   .pv section { break-inside: auto; }
-  .pv section[data-section="ninety"], .pv section[data-section="phases"], .pv section[data-section="debt"],
-  .pv section[data-section="goals"], .pv section[data-section="accounts"], .pv section[data-section="invest"],
-  .pv section[data-section="outlook"], .pv section[data-section="protection"] { break-before: page; }
+  .pv section[data-section="debt"], .pv section[data-section="goals"], .pv section[data-section="accounts"],
+  .pv section[data-section="invest"], .pv section[data-section="protection"], .pv section[data-section="limits"] { break-inside: avoid; page-break-inside: avoid; }
+  .pv section[data-section="ninety"], .pv section[data-section="phases"], .pv section[data-section="outlook"] { break-before: page; }
   .pv-scroll { overflow: visible !important; border: 0 !important; }
   .pv table { min-width: 0 !important; width: 100% !important; font-size: 9pt; }
   .pv th { background: #fff !important; color: #000 !important; border-bottom: 1.5pt solid #000; }
@@ -20,5 +33,19 @@
   .pv .pv-toggle { display: none !important; }
   .pv .pv-box, .pv .pv-warn, .pv .pv-card, .pv .pv-tile { background: #fff !important; border: .75pt solid #000 !important; }
   .pv .pv-chart { border: 0 !important; }
-  .pv details > *:not(summary) { display: block !important; }
+  .pv .pv-tip { display: none !important; }
+  .pv .pv-tile .v, .pv .pv-sub, .pv .pv-sum, .pv .pv-foot, .pv li, .pv p { color: #000 !important; }
+  .pv .pv-seg > div { color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .pv * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* keep figures whole */
+  .pv .pv-chartbox, .pv .pv-chart, .pv svg, .pv .pv-card, .pv .pv-tile, .pv .pv-tiles > *, .pv .pv-box, .pv .pv-warn,
+  .pv .pv-alloc, .pv .pv-seg, .pv .pv-legend, .pv .pv-income, .pv .pv-cmp, .pv .pv-pencap, .pv .pv-gh, .pv .pv-stepper li,
+  .pv .pv-scroll { break-inside: avoid; page-break-inside: avoid; }
+  .pv h2, .pv h3, .pv .pv-sh, .pv summary { break-after: avoid; page-break-after: avoid; }
+  .pv details > *:not(summary) { display: block !important; content-visibility: visible !important; }
+  .pv details > summary { list-style: none; }
+  .pv details > summary .pv-ico { display: none; }
+  .pv .pv-acct-table { display: block !important; }
+  .pv .pv-stepper { display: none !important; }
+  .pv .pv-lbl { position: static !important; width: auto !important; height: auto !important; overflow: visible !important; clip: auto !important; }
 }

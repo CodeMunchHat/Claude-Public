@@ -57,6 +57,9 @@ PlanView.render(window.__plan, window.__inputs, document.getElementById('out'));
     assert.equal(await page.locator('[data-section="toolbar"] button[aria-label][title]').count(), 4);
     assert.ok(await page.locator('[data-section="situation"] .pv-tile').count() >= 5);
     assert.ok(await page.locator('.pv-seg').count() >= 2, 'cash-flow and income bars');
+    assert.equal(await page.locator('.pv-donut circle').count(), 2, 'donut shows stocks and bonds only');
+    assert.equal(await page.locator('.pv-donut text').first().textContent(), Math.round(plan.allocation.stockPct * 100) + '%', 'donut center is the investments-only stock share');
+    assert.ok(/Pension counts like bonds: counting it, the whole picture is about \d+% stocks/.test(await page.locator('.pv-pencap').innerText()));
     assert.ok(await page.locator('[data-section="goals"] .pv-status.no').count() === 1, 'one infeasible goal');
     // hover tooltip on the outlook chart
     const box = await page.locator('#pv-outchart-t').evaluateHandle((t) => t.ownerSVGElement.querySelector('rect[tabindex]'));
