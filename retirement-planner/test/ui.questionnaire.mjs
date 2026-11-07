@@ -33,7 +33,7 @@ for (const [w, h] of [[375, 800], [1024, 800]]) {
   assert.equal(await page.evaluate(() => Questionnaire.validateAll().valid), false);
   ok(`${w}: empty form invalid`);
 
-  await page.click('text=Load example (Cheltsey & Drew)');
+  await page.click('[data-action=example]');
   assert.match(await page.textContent('#q-status'), /Example loaded/);
   for (let s = 1; s <= 7; s++) {
     assert.match(await page.textContent('#q-progress-text'), new RegExp(`Step ${s} of 7`));
@@ -41,6 +41,7 @@ for (const [w, h] of [[375, 800], [1024, 800]]) {
     await page.screenshot({ path: path.join(shots, `step${s}-${w}.png`), fullPage: true });
     const over = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
     assert.ok(over, `horizontal overflow on step ${s} at ${w}`);
+    if ([1, 2, 6, 7].includes(s)) await page.screenshot({ path: path.join(shots, `q-step${s}-${w}.png`), fullPage: true });
     if (s < 7) await page.click('[data-action=next]');
   }
   ok(`${w}: stepped through 7 screens, no horizontal overflow`);
@@ -78,7 +79,7 @@ for (const [w, h] of [[375, 800], [1024, 800]]) {
 
   // Percent entry: whole numbers -> fractions; earners=1 trims people
   await page.fill('#f-household-people-0-age', '28');
-  await page.selectOption('#f-household-earners', '1');
+  await page.check('#f-household-earners-1', { force: true });
   const one = await page.evaluate(() => Questionnaire.getInputs());
   assert.equal(one.household.people.length, 1);
   assert.ok(one.accounts.every((a) => a.owner === 0));

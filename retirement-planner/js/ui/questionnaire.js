@@ -77,6 +77,11 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function pname(i) { return (S.household.people[i].name || '').trim() || ('Person ' + (i + 1)); }
   function r6(n) { return Math.round(n * 1e8) / 1e8; }
+  function ic(name, cls) { return '<svg class="ico' + (cls ? ' ' + cls : '') + '" aria-hidden="true" focusable="false"><use href="#q-icon-' + name + '"/></svg>'; }
+  var STEP_ICONS = ['people', 'bank', 'wallet', 'credit-card', 'flag', 'gauge', 'sliders'];
+  var ACCT_ICONS = { '401k': 'briefcase', '403b': 'briefcase', '457b': 'briefcase', tsp: 'briefcase', pension: 'clock', trad_ira: 'trend', roth_ira: 'trend', hsa: 'heart', taxable: 'bank' };
+  var DEBT_ICONS = { credit_card: 'credit-card', auto: 'car', student_federal: 'graduation', student_private: 'graduation', personal: 'person', mortgage: 'home', other: 'dots' };
+  var GOAL_ICONS = { house: 'home', kids: 'smile', grad_school: 'graduation', other: 'star' };
   function money(n) { return '$' + Math.round(n || 0).toLocaleString('en-US'); }
 
   /* ---------- getInputs / setInputs ---------- */
@@ -124,7 +129,7 @@
 
   /* ---------- field builders ---------- */
   function tipBtn(id, label, text) {
-    return '<button type="button" class="tip" data-tip="' + id + '-tip" aria-expanded="false" aria-label="What is ' + esc(label) + '?" title="' + esc(text) + '">?</button>';
+    return '<button type="button" class="tip" data-tip="' + id + '-tip" aria-expanded="false" aria-label="What is ' + esc(label) + '?" title="' + esc(text) + '">' + ic('info') + '</button>';
   }
   function tipBox(id, text) { return text ? '<p class="tiptext" id="' + id + '-tip" hidden>' + esc(text) + '</p>' : ''; }
 
@@ -149,6 +154,7 @@
     }
     if (kind === 'select') {
       ctl = '<select' + a + '>' + optionsHtml(o.opts, v, !o.noBlank) + '</select>';
+      if (o.icons) ctl = '<div class="selrow"><span class="rowicon">' + ic(o.icons[v] || 'dots') + '</span>' + ctl + '</div>';
     } else if (kind === 'text') {
       ctl = '<input type="text"' + a + ' value="' + esc(v) + '"' + (o.ph ? ' placeholder="' + esc(o.ph) + '"' : '') + ' autocomplete="off">';
     } else {
@@ -161,30 +167,33 @@
   }
   function req(o) { o.req = true; return o; }
 
-  function radioGroup(path, legend, tip, list) {
-    var id = idOf(path), v = get(path), h = '<fieldset class="field radiogroup"><legend>' + esc(legend) + '</legend>';
-    h += '<div class="lbl">' + tipBtn(id, legend, tip) + '<span class="tipnote">What does this mean?</span></div>' + tipBox(id, tip) + '<div class="opts">';
-    list.forEach(function (o) {
-      h += '<label class="radio"><input type="radio" name="' + id + '" id="' + id + '-' + o[0] + '" data-bind="' + path + '" data-kind="radio" data-req="1" value="' + o[0] + '"' + (v === o[0] ? ' checked' : '') + ' aria-describedby="' + id + '-err"><span>' + esc(o[1]) + '</span></label>';
+  function cardGroup(path, legend, tip, list, o) {
+    o = o || {};
+    var id = idOf(path), v = get(path), h = '<fieldset class="field radiogroup"><legend' + (o.hideLegend ? ' class="sr"' : '') + '>' + esc(legend) + '</legend>';
+    if (tip) h += '<div class="lbl">' + tipBtn(id, legend, tip) + '</div>' + tipBox(id, tip);
+    h += '<div class="cards c' + list.length + '">';
+    list.forEach(function (c) {
+      h += '<label class="choice"><input type="radio" name="' + id + '" id="' + id + '-' + c[0] + '" data-bind="' + path + '" data-kind="radio" data-req="1"' + (o.numeric ? ' data-num="1"' : '') + (o.struct ? ' data-struct="1"' : '') +
+        ' value="' + c[0] + '"' + (String(v) === String(c[0]) ? ' checked' : '') + ' aria-describedby="' + id + '-err"><span class="card-face">' + ic(c[2], 'big') + '<b>' + esc(c[1]) + '</b>' + (c[3] ? '<small>' + esc(c[3]) + '</small>' : '') + '</span></label>';
     });
     return h + '</div><p class="err" id="' + id + '-err" role="alert"></p></fieldset>';
   }
 
   /* ---------- step renderers ---------- */
   function stepHousehold() {
-    var h = '<p class="lead">Tell us about your household. One or two earners.</p><div class="grid">';
-    h += fld('household.earners', 'Number of earners', { kind: 'select', opts: [[1, 'Just me (1 earner)'], [2, 'Two earners']], noBlank: true, struct: 1, numeric: 1, req: 1 });
+    var h = '<p class="lead">Who earns money in your household?</p>';
+    h += cardGroup('household.earners', 'Number of earners', null, [[1, 'One earner', 'person'], [2, 'Two earners', 'people']], { numeric: 1, struct: 1 }) + '<div class="grid">';
     h += fld('household.state', 'State you live in', req({ kind: 'select', opts: STATES, tip: 'Your state decides state income tax. Tennessee and several other states have none on wages.' }));
-    h += '</div>' + fld('household.married', 'We are married (file taxes jointly)', { kind: 'check', tip: 'Married couples usually file taxes together, which changes tax brackets and some contribution limits.' });
+    h += '</div>' + fld('household.married', 'Married (file taxes jointly)', { kind: 'check', tip: 'Married couples usually file taxes together, which changes tax brackets and some contribution limits.' });
     for (var i = 0; i < S.household.earners; i++) {
       var b = 'household.people.' + i + '.';
       h += '<fieldset class="card"><legend>' + esc(pname(i)) + '</legend><div class="grid">';
       h += fld(b + 'name', 'Name', { kind: 'text', ph: 'Person ' + (i + 1) });
       h += fld(b + 'age', 'Current age', req({ kind: 'num', min: 16, max: 100 }));
-      h += fld(b + 'retireAge', 'Planned retirement age', req({ kind: 'num', min: 30, max: 100, tip: TIP.retireAge }));
-      h += fld(b + 'salary', 'Yearly salary before tax', req({ kind: 'money', min: 0, max: 5000000 }));
-      h += fld(b + 'raisePct', 'Expected raises above inflation, per year', req({ kind: 'pct', min: -10, max: 20, tip: TIP.raise }));
-      h += '</div>' + fld(b + 'publicService', 'Works in public service (government, school, nonprofit)', { kind: 'check', tip: TIP.publicService }) + '</fieldset>';
+      h += fld(b + 'retireAge', 'Retire at age', req({ kind: 'num', min: 30, max: 100, tip: TIP.retireAge }));
+      h += fld(b + 'salary', 'Salary per year, before tax', req({ kind: 'money', min: 0, max: 5000000 }));
+      h += fld(b + 'raisePct', 'Raises above inflation, per year', req({ kind: 'pct', min: -10, max: 20, tip: TIP.raise }));
+      h += '</div>' + fld(b + 'publicService', 'Public service job (government, school, nonprofit)', { kind: 'check', tip: TIP.publicService }) + '</fieldset>';
     }
     return h;
   }
@@ -192,13 +201,18 @@
   function typeTip(t) {
     return { '401k': TIP.k401, '403b': TIP.k403, '457b': TIP.k457, tsp: TIP.tsp, pension: TIP.pension, trad_ira: TIP.ira, roth_ira: TIP.roth, hsa: TIP.hsa, taxable: TIP.taxable }[t];
   }
+  function rmBtn(act, i, what) {
+    var t = 'Remove ' + what + ' ' + (i + 1);
+    return '<button type="button" class="btn icon rm" data-action="' + act + '" data-i="' + i + '" aria-label="' + t + '" title="' + t + '">' + ic('trash') + '</button>';
+  }
+  function addBtn(act, label) { return '<button type="button" class="btn secondary add" data-action="' + act + '" title="' + label + '">' + ic('plus') + '<span>' + label + '</span></button>'; }
   function stepAccounts() {
-    var E = S.household.earners, h = '<p class="lead">Add each retirement or investment account you have, or plan to use. Start with a balance of 0 if you have not opened it yet. You can skip this screen if you have none.</p>';
+    var E = S.household.earners, h = '<p class="lead">Add each retirement or investment account. Use a balance of 0 if not opened yet.</p>';
     S.accounts.forEach(function (a, i) {
       var b = 'accounts.' + i + '.';
       h += '<fieldset class="card"><legend>Account ' + (i + 1) + '</legend><div class="grid">';
       if (E === 2) h += fld(b + 'owner', 'Whose account', { kind: 'select', opts: [[0, pname(0)], [1, pname(1)]], noBlank: true, numeric: 1, req: 1 });
-      h += fld(b + 'type', 'Account type', { kind: 'select', opts: ACCT_TYPES, noBlank: true, struct: 1, req: 1, tip: typeTip(a.type) });
+      h += fld(b + 'type', 'Account type', { kind: 'select', opts: ACCT_TYPES, icons: ACCT_ICONS, noBlank: true, struct: 1, req: 1, tip: typeTip(a.type) });
       h += fld(b + 'balance', 'Current balance', req({ kind: 'money', min: 0 }));
       h += fld(b + 'contribPct', a.type === 'pension' ? 'Your pension contribution (% of pay)' : 'Your contribution (% of pay)', req({ kind: 'pct', min: 0, max: 100, tip: 'The share of each paycheck you put in. Enter 0 if you are not contributing yet.' }));
       if (MATCH_TYPES.indexOf(a.type) >= 0) {
@@ -212,13 +226,13 @@
       }
       h += '</div>';
       if (MATCH_TYPES.indexOf(a.type) >= 0) h += fld(b + 'rothOption', 'My plan offers a Roth option', { kind: 'check', tip: TIP.roth401 });
-      h += '<button type="button" class="btn link danger" data-action="rm-account" data-i="' + i + '">Remove account ' + (i + 1) + '</button></fieldset>';
+      h += rmBtn('rm-account', i, 'account') + '</fieldset>';
     });
-    return h + '<button type="button" class="btn secondary" data-action="add-account">+ Add an account</button>';
+    return h + addBtn('add-account', 'Add an account');
   }
 
   function stepCash() {
-    return '<p class="lead">Cash you have right now, and what you spend.</p><div class="grid">' +
+    return '<p class="lead">Cash on hand and monthly spending.</p><div class="grid">' +
       fld('cash.checking', 'Checking balance', req({ kind: 'money', min: 0, tip: TIP.savingsAccts })) +
       fld('cash.savings', 'Savings balance', req({ kind: 'money', min: 0, tip: TIP.savingsAccts })) +
       fld('cash.monthlyExpenses', 'Monthly expenses (whole household)', req({ kind: 'money', min: 0, tip: TIP.expenses })) +
@@ -226,26 +240,26 @@
   }
 
   function stepDebts() {
-    var h = '<p class="lead">List each debt. Skip this screen if you have none.</p>';
+    var h = '<p class="lead">List each debt. Skip if you have none.</p>';
     S.debts.forEach(function (d, i) {
       var b = 'debts.' + i + '.';
       h += '<fieldset class="card"><legend>Debt ' + (i + 1) + '</legend><div class="grid">' +
         fld(b + 'name', 'Name', req({ kind: 'text', ph: 'Visa, car, student loan' })) +
-        fld(b + 'type', 'Type', req({ kind: 'select', opts: DEBT_TYPES, noBlank: true })) +
+        fld(b + 'type', 'Type', req({ kind: 'select', opts: DEBT_TYPES, icons: DEBT_ICONS, noBlank: true, struct: 1 })) +
         fld(b + 'balance', 'Balance owed', req({ kind: 'money', min: 0 })) +
         fld(b + 'apr', 'Interest rate (APR)', req({ kind: 'pct', min: 0, max: 100, tip: TIP.apr })) +
         fld(b + 'minPayment', 'Minimum monthly payment', req({ kind: 'money', min: 0, tip: TIP.minPay })) +
-        '</div><button type="button" class="btn link danger" data-action="rm-debt" data-i="' + i + '">Remove debt ' + (i + 1) + '</button></fieldset>';
+        '</div>' + rmBtn('rm-debt', i, 'debt') + '</fieldset>';
     });
-    return h + '<button type="button" class="btn secondary" data-action="add-debt">+ Add a debt</button>';
+    return h + addBtn('add-debt', 'Add a debt');
   }
 
   function stepGoals() {
-    var h = '<p class="lead">Big things you want to pay for besides retirement. Skip this screen if none.</p>';
+    var h = '<p class="lead">Big things to save for besides retirement. Skip if none.</p>';
     S.goals.forEach(function (g, i) {
       var b = 'goals.' + i + '.';
       h += '<fieldset class="card"><legend>Goal ' + (i + 1) + '</legend><div class="grid">' +
-        fld(b + 'type', 'Goal type', req({ kind: 'select', opts: GOAL_TYPES, noBlank: true, struct: 1 })) +
+        fld(b + 'type', 'Goal type', req({ kind: 'select', opts: GOAL_TYPES, icons: GOAL_ICONS, noBlank: true, struct: 1 })) +
         fld(b + 'name', 'Name', req({ kind: 'text' }));
       if (g.type === 'house') {
         h += fld(b + 'targetPrice', 'Target house price', req({ kind: 'money', min: 1 })) +
@@ -256,20 +270,20 @@
       }
       h += fld(b + 'years', 'Years until you need it', req({ kind: 'num', min: 0.5, max: 60 })) +
         fld(b + 'saved', 'Already saved for it', req({ kind: 'money', min: 0, tip: TIP.saved })) +
-        '</div><button type="button" class="btn link danger" data-action="rm-goal" data-i="' + i + '">Remove goal ' + (i + 1) + '</button></fieldset>';
+        '</div>' + rmBtn('rm-goal', i, 'goal') + '</fieldset>';
     });
-    return h + '<button type="button" class="btn secondary" data-action="add-goal">+ Add a goal</button>';
+    return h + addBtn('add-goal', 'Add a goal');
   }
 
   function stepRisk() {
-    return '<p class="lead">Three quick questions about comfort with risk. There are no wrong answers.</p>' +
-      radioGroup('risk.dropReaction', 'If your investments dropped 20% in a few months, what would you do?', TIP.drop, [['hold_or_buy', 'Hold on, or buy more while prices are low'], ['nervous_hold', 'Feel nervous, but hold on'], ['sell', 'Sell some or all to stop the losses']]) +
-      radioGroup('risk.horizonComfort', 'How long could you leave this money invested without touching it?', TIP.horizon, [['short', 'Less than 5 years'], ['medium', '5 to 15 years'], ['long', 'More than 15 years']]) +
-      radioGroup('risk.experience', 'How much investing experience do you have?', TIP.exp, [['none', 'None. This is new to me'], ['some', 'Some. I have owned funds or stocks'], ['lots', 'A lot. I invest regularly']]);
+    return '<p class="lead">No wrong answers. Pick the closest.</p>' +
+      cardGroup('risk.dropReaction', 'Your investments drop 30% in a few months. You...', TIP.drop, [['hold_or_buy', 'Buy more', 'cart', 'Prices are on sale'], ['nervous_hold', 'Hold on', 'hand', 'Wait it out'], ['sell', 'Sell', 'run', 'Stop the losses']]) +
+      cardGroup('risk.horizonComfort', 'How long can the money stay invested?', TIP.horizon, [['short', 'Under 5 years', 'clock'], ['medium', '5 to 15 years', 'calendar'], ['long', '15+ years', 'trend']]) +
+      cardGroup('risk.experience', 'Your investing experience', TIP.exp, [['none', 'New to it', 'sprout'], ['some', 'Some', 'trend', 'Owned funds or stocks'], ['lots', 'A lot', 'star', 'Invest regularly']]);
   }
 
   function stepAssumptions() {
-    return '<p class="lead">Defaults are sensible for most people. Change them only if you have a reason.</p><div class="grid">' +
+    return '<p class="lead">Defaults suit most people.</p><div class="grid">' +
       fld('assumptions.realReturn', 'Expected investment return after inflation (real return)', req({ kind: 'pct', min: -2, max: 15, tip: TIP.realReturn })) +
       fld('assumptions.safeYield', 'Safe savings yield', req({ kind: 'pct', min: 0, max: 15, tip: TIP.safeYield })) +
       fld('assumptions.withdrawalRate', 'Retirement withdrawal rate', req({ kind: 'pct', min: 1, max: 10, tip: TIP.withdrawal })) +
@@ -277,40 +291,52 @@
       fld('assumptions.waitYearsComparison', 'Cost-of-waiting comparison (years)', req({ kind: 'num', min: 0, max: 40, tip: TIP.wait })) +
       fld('assumptions.payoffMethod', 'Debt payoff method', req({ kind: 'select', opts: [['avalanche', 'Avalanche (highest rate first)'], ['snowball', 'Snowball (smallest balance first)']], noBlank: true, tip: TIP.payoff })) +
       fld('assumptions.extraMonthlyCash', 'Monthly free cash override', { kind: 'money', min: 0, tip: TIP.extra, hint: 'Leave blank to let the planner estimate it.' }) +
-      '</div><h3>Review</h3><div id="review" class="review" aria-live="polite"></div>';
+      '</div><h3>Review</h3><div id="review" aria-live="polite"></div>';
   }
 
   var RENDER = [stepHousehold, stepAccounts, stepCash, stepDebts, stepGoals, stepRisk, stepAssumptions];
 
+  function rcard(icon, title, big, small) {
+    return '<div class="rcard">' + ic(icon, 'big') + '<div><h4>' + esc(title) + '</h4><p class="big">' + esc(big) + '</p>' + (small ? '<p class="small">' + esc(small) + '</p>' : '') + '</div></div>';
+  }
   function reviewHtml() {
-    var i = getInputs(), h = '<dl>', hh = i.household;
-    h += '<dt>Household</dt><dd>' + hh.earners + ' earner' + (hh.earners > 1 ? 's' : '') + (hh.married ? ', married' : '') + ', ' + esc(hh.state) + '. ' +
-      hh.people.map(function (p) { return esc(p.name) + ' (age ' + (p.age == null ? '?' : p.age) + ', retire at ' + (p.retireAge == null ? '?' : p.retireAge) + ', ' + money(p.salary) + ')'; }).join('; ') + '</dd>';
-    h += '<dt>Retirement accounts</dt><dd>' + (i.accounts.length ? i.accounts.map(function (a) { return esc(a.type) + ' ' + money(a.balance); }).join(', ') : 'None') + '</dd>';
-    h += '<dt>Cash</dt><dd>Checking ' + money(i.cash.checking) + ', savings ' + money(i.cash.savings) + ', spending ' + money(i.cash.monthlyExpenses) + '/month, emergency fund ' + money(i.cash.emergencyFund) + '</dd>';
-    var td = i.debts.reduce(function (s, d) { return s + (d.balance || 0); }, 0);
-    h += '<dt>Debts</dt><dd>' + (i.debts.length ? i.debts.length + ' totaling ' + money(td) : 'None') + '</dd>';
-    h += '<dt>Goals</dt><dd>' + (i.goals.length ? i.goals.map(function (g) { return esc(g.name); }).join(', ') : 'None') + '</dd>';
-    h += '<dt>Risk</dt><dd>' + [i.risk.dropReaction, i.risk.horizonComfort, i.risk.experience].map(function (x) { return x ? esc(x.replace(/_/g, ' ')) : 'not answered'; }).join(' / ') + '</dd>';
-    h += '<dt>Assumptions</dt><dd>Real return ' + r6(i.assumptions.realReturn * 100) + '%, withdrawal ' + r6(i.assumptions.withdrawalRate * 100) + '%, Social Security ' + money(i.assumptions.socialSecurityAtRetirement) + '/year, ' + esc(i.assumptions.payoffMethod) + ' payoff</dd></dl>';
+    var i = getInputs(), hh = i.household, A = i.assumptions;
+    var sum = function (arr, k) { return arr.reduce(function (t, x) { return t + (x[k] || 0); }, 0); };
+    var cashTotal = (i.cash.checking || 0) + (i.cash.savings || 0);
+    var riskTxt = [i.risk.dropReaction, i.risk.horizonComfort, i.risk.experience].every(Boolean) ? 'Answered' : 'Not finished';
+    var h = '<div class="rgrid">';
+    h += rcard('people', 'Household', hh.earners + (hh.earners > 1 ? ' earners' : ' earner') + ', ' + hh.state, hh.people.map(function (p) { return p.name + ' ' + money(p.salary); }).join(' / '));
+    h += rcard('bank', 'Accounts', String(i.accounts.length), i.accounts.length ? money(sum(i.accounts, 'balance')) + ' saved so far' : 'None added');
+    h += rcard('wallet', 'Cash', money(cashTotal), money(i.cash.monthlyExpenses) + ' spent per month');
+    h += rcard('credit-card', 'Debts', i.debts.length ? money(sum(i.debts, 'balance')) : 'None', i.debts.length ? i.debts.length + (i.debts.length > 1 ? ' debts' : ' debt') + ', ' + A.payoffMethod : '');
+    h += rcard('flag', 'Goals', String(i.goals.length), i.goals.map(function (g) { return g.name; }).join(', '));
+    h += rcard('gauge', 'Risk', riskTxt, '');
+    h += rcard('sliders', 'Assumptions', r6(A.realReturn * 100) + '% return', r6(A.withdrawalRate * 100) + '% withdrawal, SS ' + money(A.socialSecurityAtRetirement));
+    h += '</div>';
     var v = validateAll();
-    h += v.valid ? '<p class="ok">Everything looks complete.</p>' : '<p class="warn">' + v.errors.length + ' answer' + (v.errors.length > 1 ? 's need' : ' needs') + ' attention. First: screen ' + (v.errors[0].step + 1) + ' (' + esc(STEPS[v.errors[0].step]) + ').</p>';
+    h += v.valid ? '<p class="verdict ok">' + ic('check') + 'Everything looks complete.</p>' : '<p class="verdict warn">' + ic('info') + v.errors.length + ' answer' + (v.errors.length > 1 ? 's need' : ' needs') + ' attention. First: screen ' + (v.errors[0].step + 1) + ' (' + esc(STEPS[v.errors[0].step]) + ').</p>';
     return h;
   }
 
   /* ---------- shell ---------- */
+  function tb(act, icon, label, text) {
+    return '<button type="button" class="btn small secondary tb" data-action="' + act + '" aria-label="' + label + '" title="' + label + '">' + ic(icon) + '<span class="wide">' + text + '</span></button>';
+  }
   function shell() {
     var h = '<div class="toolbar" role="group" aria-label="Save and load">' +
-      '<button type="button" class="btn small secondary" data-action="save">Save inputs</button>' +
-      '<button type="button" class="btn small secondary" data-action="load">Load inputs</button>' +
-      '<button type="button" class="btn small secondary" data-action="example">Load example (Cheltsey &amp; Drew)</button>' +
+      tb('save', 'save', 'Save inputs to a file', 'Save') + tb('load', 'folder-open', 'Load inputs from a file', 'Load') +
+      tb('example', 'lightbulb', 'Load example (Cheltsey & Drew)', 'Example: Cheltsey &amp; Drew') +
       '<input type="file" id="q-file" accept="application/json,.json" hidden aria-label="Choose an inputs JSON file"></div>' +
       '<p id="q-status" class="status" role="status" aria-live="polite"></p>' +
-      '<div class="progress"><p class="progress-text" id="q-progress-text"></p><div class="bar" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" aria-label="Progress" id="q-bar"><span id="q-fill"></span></div></div>';
+      '<ol class="stepbar" id="q-bar" aria-label="Progress">';
     STEPS.forEach(function (t, i) {
-      h += '<section class="step" data-step="' + i + '" aria-labelledby="q-h' + i + '" hidden><h2 id="q-h' + i + '" tabindex="-1">' + (i + 1) + '. ' + esc(t) + '</h2><div class="step-body" id="q-body' + i + '"></div></section>';
+      h += '<li data-i="' + i + '"><span class="dot">' + ic(STEP_ICONS[i]) + '<em>' + (i + 1) + '</em></span><span class="sname wide">' + esc(t.replace(' and review', '')) + '</span></li>';
     });
-    h += '<div class="nav"><button type="button" class="btn secondary" data-action="back">Back</button><button type="button" class="btn primary" data-action="next">Next</button></div>';
+    h += '</ol><p class="progress-text sr" id="q-progress-text"></p>';
+    STEPS.forEach(function (t, i) {
+      h += '<section class="step" data-step="' + i + '" aria-labelledby="q-h' + i + '" hidden><h2 id="q-h' + i + '" tabindex="-1">' + ic(STEP_ICONS[i]) + (i + 1) + '. ' + esc(t) + '</h2><div class="step-body" id="q-body' + i + '"></div></section>';
+    });
+    h += '<div class="nav"><button type="button" class="btn secondary" data-action="back" aria-label="Back" title="Back">' + ic('chevron-left') + '<span class="wide">Back</span></button><button type="button" class="btn primary" data-action="next" title="Next"></button></div>';
     return h;
   }
 
@@ -323,12 +349,13 @@
     var last = cur === STEPS.length - 1;
     root.querySelector('[data-action=back]').disabled = cur === 0;
     var nx = root.querySelector('[data-action=next]');
-    nx.textContent = last ? 'Build my plan' : 'Next';
+    nx.innerHTML = last ? '<span>Build my plan</span>' + ic('check') : '<span>Next</span>' + ic('chevron-right');
+    nx.setAttribute('aria-label', last ? 'Build my plan' : 'Next');
     document.getElementById('q-progress-text').textContent = 'Step ' + (cur + 1) + ' of ' + STEPS.length + ': ' + STEPS[cur];
-    var bar = document.getElementById('q-bar');
-    bar.setAttribute('aria-valuenow', cur + 1);
-    bar.setAttribute('aria-valuetext', 'Step ' + (cur + 1) + ' of ' + STEPS.length);
-    document.getElementById('q-fill').style.width = ((cur + 1) / STEPS.length * 100) + '%';
+    Array.prototype.forEach.call(document.querySelectorAll('#q-bar li'), function (li, k) {
+      li.className = k < cur ? 'done' : (k === cur ? 'current' : '');
+      if (k === cur) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+    });
     if (last) document.getElementById('review').innerHTML = reviewHtml();
     if (!keepFocus) { document.getElementById('q-h' + cur).focus({ preventScroll: true }); window.scrollTo(0, 0); }
   }
@@ -344,7 +371,7 @@
   function readEl(el) {
     var k = el.dataset.kind, v;
     if (k === 'check') v = el.checked;
-    else if (k === 'radio') v = el.value;
+    else if (k === 'radio') v = el.dataset.num ? Number(el.value) : el.value;
     else if (k === 'text') v = el.value;
     else if (k === 'select') v = el.dataset.num ? (el.value === '' ? null : Number(el.value)) : el.value;
     else { v = el.value === '' ? null : Number(el.value); if (v != null && k === 'pct') v = r6(v / 100); }
@@ -417,17 +444,20 @@
       renderStep(0); renderStep(1);
     } else if ((m = /^accounts\.(\d+)\.type$/.exec(path))) {
       renderStep(1);
+    } else if (/^debts\.\d+\.type$/.test(path)) {
+      renderStep(3);
     } else if ((m = /^goals\.(\d+)\.type$/.exec(path))) {
       var g = S.goals[m[1]], names = Object.keys(GOAL_NAMES).map(function (k) { return GOAL_NAMES[k]; });
       if (!g.name || names.indexOf(g.name) >= 0) g.name = GOAL_NAMES[g.type];
       renderStep(4);
     }
-    var again = document.getElementById(idOf(path));
+    var again = document.getElementById(idOf(path)) || root.querySelector('[data-bind="' + path + '"]:checked');
     if (again) again.focus();
   }
 
   function onClick(e) {
     var t = e.target.closest('button');
+    if (t && !root.contains(t)) return;
     if (!t) return;
     if (t.classList.contains('tip')) {
       var box = document.getElementById(t.dataset.tip), open = box.hidden;
