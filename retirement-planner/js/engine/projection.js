@@ -37,12 +37,12 @@
         pay += thisPay;
         m += thisPay * pp.matchPctEff;
         if (y <= plan.houseYears) {
-          var active = Math.max(0, Math.min(12, 12 * y - pp.rothStartMonth));
-          c += thisPay * pp.preEmpPct + pp.rothMonthly * active;
+          c += thisPay * pp.preEmpPct;
         } else {
           c += thisPay * pp.afterOopPct;
         }
       });
+      if (pay > 0 && y <= plan.houseYears && plan.extraByYear) c += plan.extraByYear[y - 1] || 0;
       contribs.push(c); matches.push(m); pays.push(pay);
       phases.push(y <= plan.houseYears ? 'before_house' : 'after_house');
     }

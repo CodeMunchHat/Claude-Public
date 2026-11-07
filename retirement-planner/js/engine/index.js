@@ -245,6 +245,7 @@
       phases: wf.phases,
       debt: debt,
       goals: wf.goals,
+      cashSchedule: wf.cashSchedule,
       accounts: accounts,
       allocation: alloc,
       projection: proj,

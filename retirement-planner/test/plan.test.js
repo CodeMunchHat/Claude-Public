@@ -91,10 +91,29 @@ test('PSLF flag and goal infeasible warning', () => {
   assert.strictEqual(p.summary.pslf, true);
   assert.ok(p.protection.some((x) => /PSLF/.test(x.item)));
   assert.ok(p.summary.warnings.some((w) => /Goal/.test(w)));
-  assert.ok(p.goals.some((g) => g.feasible === false && /Tradeoff/.test(g.note)));
+  assert.ok(p.goals.some((g) => g.feasible === false && /To fix it/.test(g.note)));
 });
 
 test('empty-ish inputs do not throw', () => {
   const p = buildPlan({}, { currentYear: 2026 });
   walk(p, 'plan', (n, path) => assert.ok(Number.isFinite(n), path));
+});
+
+test('joint allocation: Roth gets money, totals never exceed free cash, house reports feasible or a delay', () => {
+  const p = buildPlan(sample(), { currentYear: 2026 });
+  const roth = p.phases.find((x) => x.id === 'roth_hsa');
+  assert.ok(roth.monthly > 0, 'roth monthly ' + roth.monthly);
+  assert.strictEqual(roth.ongoing, true);
+  assert.strictEqual(roth.endMonth, 37 * 12);
+  assert.strictEqual(p.phases.find((x) => x.id === 'retire_15').ongoing, true);
+  assert.ok(p.cashSchedule.length > 0);
+  p.cashSchedule.forEach((m) => {
+    if (m.month >= roth.startMonth) assert.ok(m.roth > 0 || m.freeCash <= 0, 'roth > 0 at month ' + m.month);
+    const total = m.roth + m.hsa + m.retire15 + m.goals.reduce((s, g) => s + g.amount, 0);
+    assert.ok(total <= m.freeCash, `month ${m.month}: ${total} > ${m.freeCash}`);
+  });
+  const house = p.goals.find((g) => g.type === 'house');
+  assert.ok(house.feasible === true || (Number.isInteger(house.delayMonths) && house.delayMonths > 0), 'house feasible or concrete delay');
+  // goals are ordered by deadline in the schedule: earlier deadline listed first
+  assert.strictEqual(p.cashSchedule[0].goals[0].name, 'Grad school');
 });

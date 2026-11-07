@@ -131,68 +131,102 @@
       } else ef.steps = ['No free cash yet; this starts once the budget gap is closed.'];
     }
 
-    // ---- 5/7. Roth/HSA and goals share free cash from here
-    var gStart = t;
-    var needs = G.needs(n.goals, gStart, A.safeYield);
-    var goalFirst = needs.some(function (x) { return x.months <= 24; });
+    // ---- 5/7. Roth/HSA and goals share free cash from here (joint month-by-month allocation)
+    var houseGoals = n.goals.filter(function (g) { return g.type === 'house'; });
+    var houseYears = houseGoals.length ? Math.round(Math.max.apply(null, houseGoals.map(function (g) { return g.years || 0; }))) : 0;
+    var gStart = t, yld = A.safeYield, iM = yld / 12;
+    var needs = G.needs(n.goals, gStart, yld);
     var earnerIdx = [];
     people.forEach(function (p, i) { if (p.salary > 0) earnerIdx.push(i); });
     var iraWant = earnerIdx.length * lim.ira / 12;
     var hasHsa = n.accounts.some(function (a) { return a.type === 'hsa'; });
     var hsaLimit = n.married ? lim.hsaFamily : lim.hsaSingle;
     var hsaWant = hasHsa ? hsaLimit / 12 : 0;
-    var R = iraWant + hsaWant, Gsum = sum(needs, function (x) { return x.required; });
-    var rothAlloc = 0, goalPay = 0, leftover = 0;
-    if (Fe2 > 0) {
-      if (goalFirst) {
-        goalPay = Math.min(Gsum, Fe2); rothAlloc = Math.min(R, Fe2 - goalPay); leftover = Fe2 - goalPay - rothAlloc;
-      } else {
-        rothAlloc = Math.min(R, 0.5 * Fe2);
-        var avail = Fe2 - rothAlloc;
-        goalPay = Math.min(Gsum, avail);
-        var left = avail - goalPay, more = Math.min(left, R - rothAlloc);
-        rothAlloc += more; leftover = left - more;
+    var R = iraWant + hsaWant;
+    var order = needs.slice().sort(function (a, b) { return a.totalMonths - b.totalMonths; });
+    order.forEach(function (x) {
+      x.bal = x.saved; x.dl = Math.max(x.totalMonths, gStart + 1); x.prio = x.totalMonths - gStart <= 24; x.pay0 = 0; x.paid = 0;
+    });
+    var goalFirst = order.some(function (x) { return x.prio && x.required > 0.5; });
+    var maxDl = order.reduce(function (m, x) { return Math.max(m, x.dl); }, gStart);
+    var simEnd = Math.min(horizonMonths, Math.max(gStart, houseYears * 12, maxDl));
+    var cashSchedule = [], extraByYear = [], a, k;
+    for (k = 0; k < Math.ceil(horizonMonths / 12) + 1; k++) extraByYear.push(0);
+    for (a = gStart; a < simEnd; a++) {
+      var act = order.filter(function (x) { return a < x.dl; });
+      var rem = Fe2, roth_ = 0, retire_ = 0;
+      act.forEach(function (x) { x.req = G.monthlyNeeded(x.cash, x.dl - a, yld, x.bal); x.pay = 0; });
+      if (Fe2 > 0) {
+        var prio = act.filter(function (x) { return x.prio; });
+        prio.forEach(function (x) { x.pay = Math.min(x.req, rem); rem -= x.pay; });
+        roth_ = prio.length ? Math.min(0.5 * rem, R) : Math.min(0.5 * Fe2, R);
+        roth_ = Math.min(roth_, rem); rem -= roth_;
+        act.filter(function (x) { return !x.prio; }).forEach(function (x) { x.pay = Math.min(x.req, rem); rem -= x.pay; });
+        var more = Math.min(rem, R - roth_); roth_ += more; rem -= more;
+        retire_ = rem;
       }
+      var ira_ = Math.min(iraWant, roth_), hsa_ = roth_ - ira_;
+      order.forEach(function (x) {
+        if (a >= x.dl) return;
+        if (a === gStart) x.pay0 = x.pay;
+        x.bal = x.bal * (1 + iM) + x.pay; x.paid += x.pay;
+      });
+      cashSchedule.push({
+        month: a, freeCash: Fe2, roth: Math.floor(ira_ + 1e-9), hsa: Math.floor(hsa_ + 1e-9), retire15: Math.floor(retire_ + 1e-9),
+        goals: act.map(function (x) { return { name: x.name, amount: Math.floor(x.pay + 1e-9) }; })
+      });
+      extraByYear[Math.floor(a / 12)] += ira_ + retire_;
     }
-    var rothIRA = Math.min(iraWant, rothAlloc), hsa = rothAlloc - rothIRA;
+    // balances for goals that never entered the loop (e.g. start after horizon): grow saved money only
+    var first = cashSchedule[0];
+    var rothIRA = first ? Math.min(iraWant, first.roth + first.hsa) : 0;
+    var hsa = first ? Math.max(0, first.roth + first.hsa - rothIRA) : 0;
+    var rothAlloc = rothIRA + hsa;
+    var goalPay = sum(order, function (x) { return x.pay0; });
+    var leftover = first ? first.retire15 : 0;
     var iraName = tax.rothAdvice === 'traditional' ? 'Traditional IRA' : 'Roth IRA';
 
-    var roth = { id: 'roth_hsa', title: iraName + (hasHsa ? ' and HSA' : ''), target: r(R * 12), monthly: r(rothAlloc), months: 0, startMonth: t, endMonth: t, why: '', steps: [] };
+    var roth = { id: 'roth_hsa', title: iraName + (hasHsa ? ' and HSA' : ''), target: r(R * 12), monthly: r(rothAlloc), months: 0, startMonth: t, endMonth: t, ongoing: true, why: '', steps: [] };
     roth.why = (tax.rothAdvice === 'traditional' ? 'At your tax bracket (' + T.pct(tax.marginal) + '), a Traditional IRA/pre-tax account saves more tax today. ' : 'At your tax bracket (' + T.pct(tax.marginal) + '), paying tax now through a Roth is the better deal. ') +
       'IRAs have low fees and a wide choice of funds, and' + (hasHsa ? ' an HSA is the only account with a tax break going in, growing, and coming out for medical costs.' : ' the limit is ' + M(lim.ira) + ' per person for 2026.') +
-      (goalFirst ? ' One of your goals is within 24 months, so goals are funded first and this gets the rest.' : ' This gets up to half of your free cash; goals get the rest.');
+      (goalFirst ? ' A goal is due within 24 months of when this starts, so that goal is funded first and this gets up to half of what remains.' : ' This gets up to half of your free cash first; goals share the rest, earliest deadline first.');
     if (Fe2 > 0) {
       roth.months = Math.max(0, horizonMonths - t); roth.endMonth = t + roth.months;
       roth.steps.push('Open a ' + iraName + ' for each of you at a low-cost broker (Fidelity, Vanguard or Schwab) and set up an automatic monthly deposit.');
       if (rothIRA > 0) roth.steps.push('Total to IRAs: ' + M(rothIRA) + ' a month' + (earnerIdx.length > 1 ? ' (' + M(rothIRA / earnerIdx.length) + ' each)' : '') + '. 2026 limit: ' + M(lim.ira) + ' per person per year.');
       if (hasHsa) roth.steps.push(hsa > 0 ? 'HSA: ' + M(hsa) + ' a month. 2026 limit: ' + M(hsaLimit) + ' (' + (n.married ? 'family' : 'single') + ' coverage). Invest the balance once it is above your plan minimum.' : 'HSA: nothing left after the IRA right now; add to it as free cash grows. 2026 limit: ' + M(hsaLimit) + '.');
+      roth.steps.push('As each goal ends, its monthly amount moves here (up to the limits), then to the 15% retirement step.');
     } else roth.steps.push('No free cash yet; this starts once the budget gap is closed.');
 
-    // goals
-    var scale = Gsum > 0 ? goalPay / Gsum : 1;
+    // goal results from the simulation
     var goalOut = needs.map(function (x) {
-      var g = x.goal, monthly = x.required * scale;
-      var feasible = Fe2 > 0 ? (goalPay >= Gsum - 0.5) : x.required <= 0.5;
-      var note;
+      var g = x.goal, pay0 = x.pay0;
+      var feasible = x.required <= 0.5 || (Fe2 > 0 && x.bal >= x.cash - 1);
       var yieldTxt = T.pct(A.safeYield, 2) + ' safe yield';
+      var note, delay = 0;
       if (x.required <= 0.5) note = 'Cash needed ' + M(x.cash) + ' is already covered by what you have set aside.';
       else if (feasible) {
-        note = 'Save ' + M(monthly) + ' a month from month ' + gStart + ' for ' + x.months + ' months in a savings account, money market or CD (' + yieldTxt + ') to reach ' + M(x.cash) + '.' +
-          (g.type === 'house' ? ' That is ' + T.pct(g.downPct, 1) + ' down plus ' + T.pct(g.closingPct, 1) + ' closing on ' + M(g.targetPrice) + '.' : '');
-        if (goalFirst && x.months <= 24) note += ' This goal is within 24 months, so it is funded before the Roth IRA.';
+        note = 'Save about ' + M(pay0) + ' a month from month ' + gStart + ' for ' + x.months + ' months in a savings account, money market or CD (' + yieldTxt + ') to reach ' + M(x.cash) + '.' +
+          (g.type === 'house' ? ' That is ' + T.pct(g.downPct, 1) + ' down plus ' + T.pct(g.closingPct, 1) + ' closing on ' + M(g.targetPrice) + '.' : '') +
+          (x.prio && goalFirst ? ' This goal is due within 24 months of the start, so it is funded before the Roth IRA.' : '') +
+          (pay0 < x.required - 0.5 ? ' The first months are a bit short; money freed as earlier goals end catches this one up.' : '');
       } else {
-        var delay = G.delayToFit(x.cash, x.months, monthly, A.safeYield, x.saved);
-        var fitCash = G.cashFromMonthly(monthly, x.months, A.safeYield, x.saved);
-        note = 'Needs ' + M(x.required) + ' a month but only ' + M(monthly) + ' fits in your free cash after the Roth/HSA share. ' +
-          (x.late ? 'Your emergency fund and debt payoff finish after this goal date. ' : '') +
-          'Tradeoff: ' + (delay != null && delay > 0 ? 'delay the goal by about ' + delay + ' months' : 'push the date back') +
-          (g.type === 'house' && (g.downPct + g.closingPct) > 0 ? ', or lower the price to about ' + M(Math.floor(fitCash / (g.downPct + g.closingPct) / 1000) * 1000) : ', or lower the amount to about ' + M(Math.floor(fitCash / 100) * 100)) +
-          (goalFirst ? '.' : ', or cut the Roth/HSA share (but retirement saving early is worth a lot).');
-        warnings.push('Goal "' + x.name + '" cannot be fully funded on time: it needs ' + M(x.required) + ' a month and about ' + M(monthly) + ' fits.');
+        var avg = x.paid / Math.max(1, x.dl - gStart);
+        delay = G.delayToFit(x.cash, Math.max(1, x.dl - gStart), avg, A.safeYield, x.saved);
+        var achieved = x.bal, dp = (g.downPct || 0) + (g.closingPct || 0);
+        var firstRec = cashSchedule[0];
+        var rothNow = firstRec ? firstRec.roth + firstRec.hsa : 0;
+        var gap = Math.max(0, x.required - pay0), freeUp = Math.min(gap, rothNow);
+        note = 'Needs ' + M(x.required) + ' a month but gets ' + M(pay0) + ' (your free cash is shared with other goals and the Roth/HSA). To fix it: ' +
+          (delay != null && delay > 0 ? 'delay by about ' + delay + ' months' : 'push the date back') + ', or lower the target to ' +
+          (g.type === 'house' && dp > 0 ? M(Math.floor(achieved / dp / 1000) * 1000) + ' (house price)' : M(Math.floor(achieved / 100) * 100)) +
+          (freeUp >= 1 ? ', or pause the ' + iraName + ' to free ' + M(freeUp) + ' a month' : '') + '.';
+        warnings.push('Goal "' + x.name + '" cannot be fully funded on time: it needs ' + M(x.required) + ' a month and gets about ' + M(pay0) + '. Delay about ' + (delay == null ? 'many' : delay) + ' months, or lower the target.');
       }
       return {
-        name: x.name, type: x.type, cashNeeded: r(x.cash), monthly: r(monthly), requiredMonthly: r(x.required),
-        startMonth: gStart, months: x.months, targetMonth: x.totalMonths, feasible: feasible, note: note
+        name: x.name, type: x.type, cashNeeded: r(x.cash), monthly: r(pay0), requiredMonthly: r(x.required),
+        startMonth: gStart, months: x.months, targetMonth: x.totalMonths, feasible: feasible, delayMonths: delay == null ? null : delay,
+        projectedBalance: r(x.bal), note: note
       };
     });
 
@@ -201,8 +235,6 @@
     var pslf = pslfPeople.length > 0 && n.debts.some(function (d) { return d.type === 'student_federal' && d.balance > 0; });
 
     // ---- contribution plan (feeds projection and account advice)
-    var houseGoals = n.goals.filter(function (g) { return g.type === 'house'; });
-    var houseYears = houseGoals.length ? Math.round(Math.max.apply(null, houseGoals.map(function (g) { return g.years || 0; }))) : 0;
     var persons = people.map(function (p, idx) {
       var accts = n.accounts.filter(function (a) { return a.owner === idx; });
       var pre = 0, mEff = 0, pen = 0, hasWork = false;
@@ -237,7 +269,7 @@
     // retire_15
     var preAnn = 0, afterAnn = 0, afterAnnPlus = 0;
     people.forEach(function (p, i) { preAnn += p.salary * persons[i].preEmpPct + persons[i].rothMonthly * 12; afterAnn += persons[i].afterOopPct * p.salary; });
-    var r15 = { id: 'retire_15', title: 'Raise retirement saving to 15%', target: r(T.retireTargetPct * n.gross), monthly: r(Math.max(0, afterAnn - preAnn) / 12), months: 0, startMonth: houseYears > 0 ? houseYears * 12 : t, endMonth: 0, why: '', steps: [] };
+    var r15 = { id: 'retire_15', title: 'Raise retirement saving to 15%', target: r(T.retireTargetPct * n.gross), monthly: r(Math.max(0, afterAnn - preAnn) / 12), months: 0, startMonth: houseYears > 0 ? houseYears * 12 : t, endMonth: 0, ongoing: true, why: '', steps: [] };
     if (F <= 0) r15.monthly = 0;
     r15.months = Math.max(0, horizonMonths - r15.startMonth);
     r15.endMonth = r15.startMonth + r15.months;
@@ -258,12 +290,12 @@
 
     // goals_taxable
     var gEndMax = goalOut.length ? Math.max.apply(null, goalOut.map(function (g) { return g.targetMonth; })) : 0;
-    var gt = { id: 'goals_taxable', title: 'Goals and taxable investing', target: r(sum(goalOut, function (g) { return g.cashNeeded; })), monthly: r(goalPay + leftover), months: 0, startMonth: t, endMonth: t, why: '', steps: [] };
+    var gt = { id: 'goals_taxable', title: 'Goals and taxable investing', target: r(sum(goalOut, function (g) { return g.cashNeeded; })), monthly: r(goalPay), months: 0, startMonth: t, endMonth: t, why: '', steps: [] };
     gt.months = goalOut.length ? Math.max(0, gEndMax - t) : Math.max(0, horizonMonths - t);
     gt.endMonth = t + gt.months;
     gt.why = 'Money you need within about 5 years should not be in stocks, so goal funds go in savings, money market or CDs. Anything left after goals goes to a regular (taxable) brokerage account.';
     goalOut.forEach(function (g) { gt.steps.push(g.name + ': ' + M(g.monthly) + ' a month into a dedicated savings account' + (g.feasible ? '.' : ' (partial; see tradeoff).')); });
-    if (leftover > 0.5) gt.steps.push('Left over: ' + M(leftover) + ' a month. Put it in a taxable index fund, or pay extra on debts under ' + T.pct(thr) + ' once your goals are covered.');
+    if (leftover > 0.5) gt.steps.push('Left over: ' + M(leftover) + ' a month once the Roth/HSA and goals are covered. It goes toward the 15% retirement step (or a taxable index fund if you are already at 15%).');
     if (!goalOut.length && !(leftover > 0.5)) gt.steps.push('No goals entered and no cash left over right now.');
     if (pslf) gt.steps.push('PSLF flag: ' + pslfPeople.join(' and ') + ' work(s) in public service with federal student loans. Do NOT rush those loans; use an income-driven plan, certify employment each year at studentaid.gov, and keep the minimum.');
 
@@ -278,7 +310,8 @@
     return {
       freeCashMonthly: F, freeCashAfterDebtPayoff: r(Fe2), warnings: warnings, phases: phases,
       debt: sched, goals: goalOut,
-      contribPlan: { houseYears: houseYears, persons: persons },
+      contribPlan: { houseYears: houseYears, persons: persons, extraByYear: extraByYear },
+      cashSchedule: cashSchedule,
       derived: { matchRows: matchRows, rothIRA: rothIRA, hsa: hsa, rothAlloc: rothAlloc, goalFirst: goalFirst, goalPay: goalPay, leftover: leftover, horizonMonths: horizonMonths, matchTakeHomeHit: matchTakeHomeHit, pslf: pslf, pslfPeople: pslfPeople, earnerIdx: earnerIdx, hasHsa: hsaWant > 0, hsaLimit: hsaLimit, gStart: gStart, iraName: iraName, houseYears: houseYears }
     };
   }
