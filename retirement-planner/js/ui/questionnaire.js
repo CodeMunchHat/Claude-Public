@@ -324,9 +324,9 @@
   }
   function shell() {
     var h = '<div class="toolbar" role="group" aria-label="Save and load">' +
-      tb('save', 'save', 'Save inputs to a file', 'Save') + tb('load', 'folder-open', 'Load inputs from a file', 'Load') +
+      tb('save', 'save-lock', 'Save inputs to an encrypted file', 'Save') + tb('load', 'folder-open', 'Load inputs from a file', 'Load') +
       tb('example', 'lightbulb', 'Load example (Cheltsey & Drew)', 'Example: Cheltsey &amp; Drew') +
-      '<input type="file" id="q-file" accept="application/json,.json" hidden aria-label="Choose an inputs JSON file"></div>' +
+      '<input type="file" id="q-file" accept="application/json,.json" hidden aria-label="Choose a saved inputs file"></div>' +
       '<p id="q-status" class="status" role="status" aria-live="polite"></p>' +
       '<ol class="stepbar" id="q-bar" aria-label="Progress">';
     STEPS.forEach(function (t, i) {
@@ -488,7 +488,11 @@
       case 'rm-debt': S.debts.splice(i, 1); renderStep(3); focusSel = '[data-action=add-debt]'; break;
       case 'add-goal': S.goals.push(newGoal('house')); renderStep(4); focusSel = '#' + idOf('goals.' + (S.goals.length - 1) + '.type'); break;
       case 'rm-goal': S.goals.splice(i, 1); renderStep(4); focusSel = '[data-action=add-goal]'; break;
-      case 'save': window.Storage.download(getInputs()); setStatus('Inputs saved to retirement-plan-inputs.json.'); break;
+      case 'save':
+        window.Storage.download(getInputs()).then(function (r) {
+          if (r) setStatus('Inputs saved to ' + r.filename + (r.encrypted ? ' (encrypted).' : ' (not encrypted).'));
+        }, function (err) { setStatus(err.message, true); });
+        break;
       case 'load': document.getElementById('q-file').click(); break;
       case 'example': loadExample(); break;
     }

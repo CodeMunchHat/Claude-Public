@@ -85,16 +85,77 @@ for (const [w, h] of [[375, 800], [1024, 800]]) {
   assert.ok(one.accounts.every((a) => a.owner === 0));
   ok(`${w}: switching to 1 earner`);
 
-  // Save/load file round trip
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('[data-action=save]')]);
-  assert.equal(dl.suggestedFilename(), 'retirement-plan-inputs.json');
-  const f = await dl.path();
-  await page.setInputFiles('#q-file', f);
+  // Save/load: encrypted round trip
+  const PASS = 'correct horse 1';
+  const before = await page.evaluate(() => Questionnaire.getInputs());
+  await page.click('[data-action=save]');
+  const dlg = page.locator('dialog.rp-dlg[open]');
+  await dlg.waitFor();
+  assert.match(await dlg.textContent(), /A lost passphrase cannot be recovered/);
+  // validation: short, then mismatch
+  await dlg.locator('input').nth(0).fill('short');
+  await dlg.locator('input').nth(1).fill('short');
+  await dlg.locator('.rp-go').click();
+  assert.match(await dlg.locator('.rp-err').textContent(), /at least 8/);
+  await dlg.locator('input').nth(0).fill(PASS);
+  await dlg.locator('input').nth(1).fill(PASS + 'x');
+  await dlg.locator('.rp-go').click();
+  assert.match(await dlg.locator('.rp-err').textContent(), /do not match/);
+  // show/hide toggle
+  assert.equal(await dlg.locator('input').nth(0).getAttribute('type'), 'password');
+  await dlg.locator('.rp-eye').click();
+  assert.equal(await dlg.locator('input').nth(0).getAttribute('type'), 'text');
+  if (w === 375) {
+    fs.mkdirSync(shots, { recursive: true });
+    await page.screenshot({ path: path.join(shots, 'enc-dialog-375.png') });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  }
+  // Escape cancels
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('dialog.rp-dlg').count(), 0);
+  // real save
+  await page.click('[data-action=save]');
+  await dlg.waitFor();
+  await dlg.locator('input').nth(0).fill(PASS);
+  await dlg.locator('input').nth(1).fill(PASS);
+  const [dl] = await Promise.all([page.waitForEvent('download'), dlg.locator('.rp-go').click()]);
+  assert.equal(dl.suggestedFilename(), 'retirement-plan-inputs.enc.json');
+  const encPath = await dl.path();
+  const encText = fs.readFileSync(encPath, 'utf8');
+  assert.equal(await page.evaluate((t) => PlanCrypto.isEncrypted(t), encText), true);
+  assert.ok(!encText.includes('Cheltsey'));
+  await page.waitForFunction(() => /encrypted/.test(document.getElementById('q-status').textContent));
+  // wrong passphrase, then retry with right one
+  await page.evaluate(() => Questionnaire.setInputs(JSON.parse(JSON.stringify(Object.assign({}, Questionnaire.getInputs(), { cash: { checking: 1, savings: 1, monthlyExpenses: 1, emergencyFund: 0 } })))));
+  await page.setInputFiles('#q-file', encPath);
+  await dlg.waitFor();
+  await dlg.locator('input').fill('wrong passphrase');
+  await dlg.locator('.rp-go').click();
+  await page.waitForFunction(() => /Wrong passphrase or damaged file/.test(document.querySelector('dialog.rp-dlg .rp-err').textContent));
+  await dlg.locator('input').fill(PASS);
+  await dlg.locator('.rp-go').click();
   await page.waitForFunction(() => /Loaded /.test(document.getElementById('q-status').textContent));
+  assert.deepStrictEqual(await page.evaluate(() => Questionnaire.getInputs()), before);
+  ok(`${w}: encrypted save, wrong passphrase retry, restore deep-equal`);
+
+  // Plain save link
+  await page.click('[data-action=save]');
+  await dlg.waitFor();
+  const [dl2] = await Promise.all([page.waitForEvent('download'), dlg.locator('.rp-plain').click()]);
+  assert.equal(dl2.suggestedFilename(), 'retirement-plan-inputs.json');
+  const plainPath = await dl2.path();
+  const plainText = fs.readFileSync(plainPath, 'utf8');
+  assert.equal(await page.evaluate((t) => PlanCrypto.isEncrypted(t), plainText), false);
+  assert.deepStrictEqual(JSON.parse(plainText), before);
+  // old plain JSON loads without a dialog
+  await page.evaluate(() => document.getElementById('q-status').textContent = '');
+  await page.setInputFiles('#q-file', plainPath);
+  await page.waitForFunction(() => /Loaded /.test(document.getElementById('q-status').textContent));
+  assert.equal(await page.locator('dialog.rp-dlg').count(), 0);
   assert.equal(await page.evaluate(() => Questionnaire.getInputs().household.earners), 1);
   await page.setInputFiles('#q-file', { name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"version":2}') });
   await page.waitForFunction(() => /version/.test(document.getElementById('q-status').textContent));
-  ok(`${w}: save/load and bad-file rejection`);
+  ok(`${w}: plain save/load and bad-file rejection`);
 
   assert.deepEqual(errors, [], 'page errors: ' + errors.join('; '));
   await page.close();

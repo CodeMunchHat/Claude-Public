@@ -531,7 +531,7 @@
     }
     btn('pencil', 'Edit answers', function () { if (window.App && typeof window.App.showQuestionnaire === 'function') window.App.showQuestionnaire(); });
     btn('download', 'Download PDF', function () { if (window.PlanPDF) window.PlanPDF.download(plan, inputs); }, true);
-    btn('save', 'Save inputs', function () { if (window.Storage && typeof window.Storage.download === 'function') window.Storage.download(inputs); });
+    btn('save', 'Save inputs', function () { if (window.Storage && typeof window.Storage.download === 'function') window.Storage.download(inputs).catch(function () {}); });
     btn('printer', 'Print', function () { window.print(); });
     root.appendChild(tb);
 

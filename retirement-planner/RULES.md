@@ -75,3 +75,10 @@ Items left at 0/null that matter: unknown employer match, unknown pension estima
 
 ## 12. Warnings (summary.warnings)
 Negative or zero free cash; debt payment too low; goal cannot be fully funded; contributions above a limit (current contribution above $24,500, or the 15% target needs more than a limit allows); pension not vested; projected retirement income under 70% of today's income.
+
+## 13. Saved file format
+- Save asks for a passphrase (at least 8 characters, typed twice) and downloads `retirement-plan-inputs.enc.json`. A lost passphrase cannot be recovered.
+- Envelope: `{"format":"rp-enc-1","kdf":"PBKDF2-SHA256","iterations":200000,"salt":"<base64 16 bytes>","iv":"<base64 12 bytes>","data":"<base64 AES-256-GCM ciphertext + tag>"}`. The plaintext is the inputs JSON from CONTRACT.md.
+- "Save without encryption" writes the plain `retirement-plan-inputs.json`. Load accepts both; a plain file loads with no passphrase prompt.
+- A wrong passphrase and a damaged file look the same (GCM authentication fails): "Wrong passphrase or damaged file".
+- If the browser has no `crypto.subtle` (some file:// or http contexts), encrypted save and load show an error; save unencrypted or open over https.
